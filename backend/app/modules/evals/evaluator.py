@@ -74,7 +74,7 @@ def evaluate_test_case(
         allowed_schemas=spec.target_schemas,
         max_rows=spec.max_rows,
     )
-    if not golden_val.is_valid or golden_val.validated_sql is None:
+    if not golden_val.passed or golden_val.validated_sql is None:
         return EvalCaseResult(
             case_id=case.id,
             question=case.question,
@@ -90,7 +90,7 @@ def evaluate_test_case(
             error_message="Golden SQL failed internal AST validation.",
         )
 
-    golden_exec = executor.execute_query(golden_val.validated_sql, spec)
+    golden_exec = executor.execute(golden_val.validated_sql, spec, include_explain=False)
     if golden_exec.status != "success":
         return EvalCaseResult(
             case_id=case.id,
@@ -132,7 +132,7 @@ def evaluate_test_case(
         allowed_schemas=spec.target_schemas,
         max_rows=spec.max_rows,
     )
-    if not val.is_valid or val.validated_sql is None:
+    if not val.passed or val.validated_sql is None:
         elapsed_ms = (time.perf_counter() - start_time) * 1000
         violation_summary = "; ".join(val.violations) if val.violations else "Security Gate rejected query."
         return EvalCaseResult(
