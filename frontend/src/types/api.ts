@@ -337,3 +337,66 @@ export interface AnalyticsDashboardResponse {
   activity_over_time: ActivityBucket[];
   database_statistics: DatabaseTableStat[];
 }
+
+export interface GoldenTestCase {
+  id: string;
+  question: string;
+  category: string;
+  difficulty: "easy" | "medium" | "hard";
+  golden_sql: string;
+  description: string;
+}
+
+export interface EvalCaseResult {
+  case_id: string;
+  question: string;
+  difficulty: "easy" | "medium" | "hard";
+  category: string;
+  status: "passed" | "mismatch" | "error" | "blocked";
+  vast_passed: boolean;
+  execution_accuracy: boolean;
+  golden_sql: string;
+  generated_sql: string | null;
+  golden_row_count: number;
+  candidate_row_count: number | null;
+  latency_ms: number;
+  error_message: string | null;
+  details?: Record<string, unknown>;
+}
+
+export interface DifficultyMetric {
+  total: number;
+  passed: number;
+  accuracy_percentage: number;
+}
+
+export interface CategoryMetric {
+  total: number;
+  passed: number;
+  accuracy_percentage: number;
+}
+
+export interface EvalRunSummary {
+  run_id: string;
+  model_name: string;
+  timestamp: string;
+  total_cases: number;
+  passed_cases: number;
+  vast_passed_count: number;
+  accuracy_percentage: number;
+  vast_percentage: number;
+  avg_latency_ms: number;
+  by_difficulty: Record<string, DifficultyMetric>;
+  by_category: Record<string, CategoryMetric>;
+}
+
+export interface EvalRunResponse {
+  summary: EvalRunSummary;
+  results: EvalCaseResult[];
+}
+
+export interface EvalRunRequest {
+  case_ids?: string[];
+  difficulty?: "easy" | "medium" | "hard";
+  mock_run?: boolean;
+}
