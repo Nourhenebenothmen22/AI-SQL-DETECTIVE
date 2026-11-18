@@ -9,6 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.modules.ai.service import DetectiveWorkflowService
 from app.modules.connections.registry import ConnectionRegistry
+from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
 from app.modules.security.gate import SecurityGate
@@ -50,6 +51,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         security_gate=app.state.security_gate,
         sql_executor=app.state.sql_executor,
         history_repo=app.state.query_run_repository,
+    )
+    app.state.eval_service = EvalOpsService(
+        settings=resolved_settings,
+        gate=app.state.security_gate,
+        executor=app.state.sql_executor,
+        connections=app.state.connection_registry,
+        workflow_service=app.state.workflow_service,
     )
 
     app.add_middleware(
