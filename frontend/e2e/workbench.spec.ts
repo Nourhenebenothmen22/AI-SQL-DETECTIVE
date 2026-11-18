@@ -166,4 +166,31 @@ test.describe("AI SQL Detective — End-to-End Workbench, Security, SSE, Analyti
     await expect(page).toHaveURL(/\/\?runId=/);
     await expect(page.getByRole("heading", { name: "SQL Detective Workbench" })).toBeVisible();
   });
+
+  test("navigates to EvalOps Benchmark, displays KPIs, and inspects golden case diff", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await expect(page.getByText(/API OK · DB connected/i)).toBeVisible({ timeout: 10_000 });
+
+    // Navigate to EvalOps via sidebar
+    await page.getByRole("link", { name: "EvalOps" }).click();
+    await expect(page).toHaveURL(/\/evals$/);
+    await expect(
+      page.getByRole("heading", { name: "AI Model Evaluation & EvalOps Benchmark" }),
+    ).toBeVisible();
+
+    // Verify key KPI cards render
+    await expect(page.getByText("Execution Accuracy (EX)")).toBeVisible();
+    await expect(page.getByText("Valid AST Rate (VAST)")).toBeVisible();
+    await expect(page.getByText("Golden Suite Size")).toBeVisible();
+
+    // Filter by difficulty
+    await page.getByRole("button", { name: /^Easy/i }).click();
+    await expect(page.getByText("golden_01")).toBeVisible();
+
+    // Open Diff accordion
+    await page.getByRole("button", { name: "Diff" }).first().click();
+    await expect(page.getByText(/Canonical Ground Truth SQL/i)).toBeVisible();
+  });
 });
