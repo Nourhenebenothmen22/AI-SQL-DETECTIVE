@@ -92,9 +92,9 @@ export function ResultsTable({
 
   if (isLoading) {
     return (
-      <div className="space-y-2 rounded-lg border border-border-subtle bg-card p-4">
+      <div className="space-y-2.5 rounded-lg border border-border-subtle bg-card p-4 shadow-sm">
         <div className="h-4 w-48 animate-pulse rounded bg-border-subtle/50" />
-        <div className="h-32 w-full animate-pulse rounded bg-border-subtle/40" />
+        <div className="h-36 w-full animate-pulse rounded bg-border-subtle/30" />
       </div>
     );
   }
@@ -103,7 +103,7 @@ export function ResultsTable({
     return (
       <div
         role="alert"
-        className="rounded-lg border border-status-error/40 bg-status-error/10 p-4 text-xs"
+        className="rounded-lg border border-status-error/40 bg-status-error/10 p-4 text-xs shadow-xs"
       >
         <p className="font-semibold text-status-error">Query Execution Error</p>
         <p className="mt-1 font-mono text-text-primary">{executionError}</p>
@@ -113,9 +113,11 @@ export function ResultsTable({
 
   if (columns.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-card px-6 py-12 text-center">
-        <TableProperties className="h-7 w-7 text-text-secondary/60" aria-hidden="true" />
-        <p className="mt-3 text-sm font-medium text-text-primary">No results yet</p>
+      <div className="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-card px-6 py-12 text-center shadow-sm">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-surface text-text-secondary/70">
+          <TableProperties className="h-6 w-6" aria-hidden="true" />
+        </div>
+        <p className="mt-3 text-sm font-semibold text-text-primary">No results yet</p>
         <p className="mt-1 max-w-md text-xs text-text-secondary">
           Ask a natural-language question above or run a read-only PostgreSQL query in the editor to
           inspect rows here.
@@ -156,7 +158,7 @@ export function ResultsTable({
               value={filterText}
               onChange={(event) => setFilterText(event.target.value)}
               placeholder="Filter rows..."
-              className="h-8 w-44 rounded-md border border-border-subtle bg-canvas pl-8 pr-2.5 text-xs text-text-primary placeholder:text-text-secondary/70"
+              className="h-8 w-44 rounded-md border border-border-subtle bg-surface pl-8 pr-2.5 text-xs text-text-primary placeholder:text-text-secondary/60 shadow-xs transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
             />
           </div>
           <Button
@@ -175,7 +177,7 @@ export function ResultsTable({
         tabIndex={0}
         role="region"
         aria-labelledby={captionId}
-        className="max-h-96 overflow-auto rounded-lg border border-border-subtle bg-card"
+        className="max-h-96 overflow-auto rounded-lg border border-border-subtle bg-card shadow-sm"
       >
         <table className="w-full min-w-[600px] border-separate border-spacing-0 text-left text-xs">
           <caption id={captionId} className="sr-only">
@@ -195,7 +197,7 @@ export function ResultsTable({
                     <button
                       type="button"
                       onClick={() => handleSort(col)}
-                      className="flex min-h-9 w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-card hover:text-text-primary"
+                      className="flex min-h-9 w-full items-center justify-between gap-2 px-3 py-2 text-left transition-colors hover:bg-card-hover hover:text-text-primary"
                     >
                       <span className="truncate">{col}</span>
                       {isSorted ? (
@@ -212,7 +214,7 @@ export function ResultsTable({
                         )
                       ) : (
                         <ArrowUpDown
-                          className="h-3 w-3 shrink-0 opacity-40"
+                          className="h-3 w-3 shrink-0 opacity-40 hover:opacity-100"
                           aria-hidden="true"
                         />
                       )}
@@ -238,7 +240,10 @@ export function ResultsTable({
               filteredAndSortedRows.map((row, rowIdx) => (
                 <tr
                   key={rowIdx}
-                  className="transition-colors duration-100 hover:bg-surface/70"
+                  className={cn(
+                    "transition-colors duration-100 hover:bg-card-hover",
+                    rowIdx % 2 === 0 ? "bg-card" : "bg-surface/30",
+                  )}
                 >
                   {columns.map((col) => {
                     const value = row[col];
@@ -254,7 +259,7 @@ export function ResultsTable({
                         )}
                       >
                         {isNull ? (
-                          <span className="rounded bg-surface px-1.5 py-0.5 text-[10px] text-text-secondary/70">
+                          <span className="rounded-sm border border-border-subtle bg-surface px-1.5 py-0.5 text-[10px] text-text-muted">
                             NULL
                           </span>
                         ) : (
