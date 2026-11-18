@@ -14,7 +14,7 @@ export function TabsList({
   return (
     <TabsPrimitive.List
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface p-1",
+        "inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface/90 p-1 shadow-xs",
         className,
       )}
       {...props}
@@ -29,7 +29,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "inline-flex min-h-7 items-center gap-1.5 rounded px-3 py-1 text-xs font-medium text-text-secondary transition-colors duration-150 hover:text-text-primary data-[state=active]:bg-card data-[state=active]:text-text-primary data-[state=active]:shadow-xs",
+        "inline-flex min-h-7 items-center gap-1.5 rounded px-3 py-1 text-xs font-medium text-text-secondary transition-all duration-150 hover:text-text-primary data-[state=active]:bg-card data-[state=active]:text-text-primary data-[state=active]:border data-[state=active]:border-border-subtle data-[state=active]:shadow-xs",
         className,
       )}
       {...props}
