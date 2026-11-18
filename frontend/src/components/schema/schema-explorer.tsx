@@ -53,7 +53,7 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
   };
 
   return (
-    <section className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface">
+    <section className="flex h-full flex-col rounded-lg border border-border-subtle bg-surface shadow-sm">
       <div className="flex items-center justify-between border-b border-border-subtle px-3.5 py-2.5">
         <div className="flex items-center gap-2">
           <Table2 className="h-4 w-4 text-accent-secondary" aria-hidden="true" />
@@ -93,7 +93,7 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Filter tables or columns..."
-            className="h-8 w-full rounded-md border border-border-subtle bg-canvas pl-8 pr-2.5 text-xs text-text-primary placeholder:text-text-secondary/70"
+            className="h-8 w-full rounded-md border border-border-subtle bg-card pl-8 pr-2.5 text-xs text-text-primary placeholder:text-text-secondary/60 shadow-xs transition-colors focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
           />
         </div>
       </div>
@@ -102,13 +102,13 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
         {schemaQuery.isLoading ? (
           <div className="space-y-2 p-1.5">
             {Array.from({ length: 7 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-8 w-full" />
+              <Skeleton key={idx} className="h-8 w-full rounded-md" />
             ))}
           </div>
         ) : schemaQuery.isError ? (
           <div
             role="alert"
-            className="m-1.5 rounded-md border border-status-error/40 bg-status-error/10 p-3 text-xs text-text-primary"
+            className="m-1.5 rounded-md border border-status-error/40 bg-status-error/10 p-3 text-xs text-text-primary shadow-xs"
           >
             <div className="flex items-center gap-1.5 font-medium text-status-error">
               <AlertCircle className="h-3.5 w-3.5" aria-hidden="true" />
@@ -133,16 +133,16 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
             No tables or columns match &ldquo;{search}&rdquo;.
           </p>
         ) : (
-          <ul className="space-y-1">
+          <ul className="space-y-1.5">
             {filteredTables.map((table) => {
               const fullName = `${table.schema_name}.${table.table_name}`;
               const isOpen = Boolean(expandedTables[fullName]) || Boolean(search.trim());
               return (
                 <li
                   key={fullName}
-                  className="rounded-md border border-border-subtle/70 bg-card/60"
+                  className="rounded-md border border-border-subtle bg-card/70 transition-all hover:border-border-subtle/90 hover:bg-card"
                 >
-                  <div className="flex items-center justify-between gap-1 px-2 py-1.5">
+                  <div className="flex items-center justify-between gap-1 px-2.5 py-1.5">
                     <button
                       type="button"
                       onClick={() => toggleTable(fullName)}
@@ -160,7 +160,7 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
                           aria-hidden="true"
                         />
                       )}
-                      <span className="truncate font-mono text-xs font-medium text-text-primary">
+                      <span className="truncate font-mono text-xs font-semibold text-text-primary">
                         {table.table_name}
                       </span>
                     </button>
@@ -176,23 +176,26 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
                   </div>
 
                   {isOpen ? (
-                    <div className="border-t border-border-subtle/60 px-2.5 py-2">
-                      <div className="mb-1.5 flex items-center justify-between font-mono text-[10px] text-text-secondary">
-                        <span>{fullName}</span>
-                        <span className="tabular-nums">
-                          {formatBytes(table.total_size_bytes)} · {table.indexes.length} idx
-                        </span>
+                    <div className="border-t border-border-subtle/60 px-2.5 py-2 bg-surface/40">
+                      <div className="mb-1.5 flex items-center justify-between font-mono text-[10px] text-text-muted">
+                        <span>{table.columns.length} columns</span>
+                        <span>{formatBytes(table.total_size_bytes)}</span>
                       </div>
 
                       <ul className="space-y-1">
-                        {table.columns.map((col) => (
-                          <li key={col.name}>
-                            <button
-                              type="button"
-                              onClick={() => onInsertIdentifier(`${table.table_name}.${col.name}`)}
-                              className="flex w-full items-center justify-between gap-2 rounded px-1.5 py-1 text-left transition-colors hover:bg-surface"
+                        {table.columns.map((col) => {
+                          const colSnippet = `${table.table_name}.${col.name}`;
+                          return (
+                            <li
+                              key={col.name}
+                              className="group flex items-center justify-between gap-1 rounded px-1.5 py-0.5 font-mono text-[11px] hover:bg-card-hover"
                             >
-                              <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-text-primary">
+                              <button
+                                type="button"
+                                onClick={() => onInsertIdentifier(colSnippet)}
+                                aria-label={`Insert ${colSnippet} into SQL editor`}
+                                className="flex min-w-0 items-center gap-1.5 text-left"
+                              >
                                 {col.is_primary_key ? (
                                   <KeyRound
                                     className="h-3 w-3 shrink-0 text-status-warning"
@@ -204,34 +207,46 @@ export function SchemaExplorer({ connectionId, onInsertIdentifier }: SchemaExplo
                                     aria-hidden="true"
                                   />
                                 ) : (
-                                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-border-subtle" />
+                                  <span
+                                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-border-subtle group-hover:bg-accent-primary"
+                                    aria-hidden="true"
+                                  />
                                 )}
-                                <span className="truncate">{col.name}</span>
-                              </span>
-                              <span className="shrink-0 font-mono text-[10px] text-text-secondary">
+                                <span
+                                  className={
+                                    col.is_primary_key
+                                      ? "font-semibold text-text-primary"
+                                      : "text-text-primary/90"
+                                  }
+                                >
+                                  {col.name}
+                                </span>
+                              </button>
+
+                              <span className="shrink-0 font-mono text-[10px] text-text-muted">
                                 {col.udt_name}
+                                {!col.is_nullable ? "!" : ""}
                               </span>
-                            </button>
-                          </li>
-                        ))}
+                            </li>
+                          );
+                        })}
                       </ul>
 
-                      {table.indexes.filter((idx) => !idx.is_primary).length > 0 ? (
+                      {table.indexes.length > 0 ? (
                         <div className="mt-2 border-t border-border-subtle/50 pt-1.5">
-                          <p className="font-mono text-[10px] uppercase tracking-wider text-text-secondary">
-                            Indexes
+                          <p className="font-mono text-[10px] uppercase text-text-muted">
+                            Indexes ({table.indexes.length})
                           </p>
-                          <ul className="mt-1 space-y-0.5">
-                            {table.indexes
-                              .filter((idx) => !idx.is_primary)
-                              .map((idx) => (
-                                <li
-                                  key={idx.name}
-                                  className="truncate font-mono text-[10px] text-text-secondary"
-                                >
-                                  {idx.name} ({idx.columns.join(", ")})
-                                </li>
-                              ))}
+                          <ul className="mt-0.5 space-y-0.5">
+                            {table.indexes.map((idx) => (
+                              <li
+                                key={idx.name}
+                                className="truncate font-mono text-[10px] text-text-secondary/80"
+                                title={idx.name}
+                              >
+                                {idx.name}
+                              </li>
+                            ))}
                           </ul>
                         </div>
                       ) : null}
