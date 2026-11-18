@@ -5,19 +5,19 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex min-h-8 items-center justify-center gap-2 rounded-md text-xs font-medium transition-colors duration-150 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex min-h-8 items-center justify-center gap-2 rounded-md text-xs font-medium transition-all duration-150 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50 select-none",
   {
     variants: {
       variant: {
         primary:
-          "bg-accent-primary text-text-primary hover:bg-accent-primary/90 border border-accent-primary/40",
+          "bg-accent-primary text-text-primary hover:bg-accent-primary/90 border border-accent-primary/60 shadow-sm shadow-accent-primary/20",
         secondary:
-          "bg-card text-text-primary hover:bg-card/80 border border-border-subtle",
+          "bg-card text-text-primary hover:bg-card-hover border border-border-subtle hover:border-border-subtle/80",
         outline:
-          "bg-transparent text-text-primary hover:bg-card border border-border-subtle",
+          "bg-transparent text-text-primary hover:bg-card border border-border-subtle hover:border-border-interactive/40",
         ghost: "bg-transparent text-text-secondary hover:bg-card hover:text-text-primary",
         danger:
-          "bg-status-error/15 text-status-error hover:bg-status-error/25 border border-status-error/40",
+          "bg-status-error/15 text-status-error hover:bg-status-error/25 border border-status-error/40 shadow-xs shadow-status-error/20",
       },
       size: {
         sm: "h-8 px-2.5 text-xs",
