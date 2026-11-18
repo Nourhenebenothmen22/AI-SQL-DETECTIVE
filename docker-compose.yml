@@ -1,0 +1,70 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-sql-detective-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ai_sql_detective}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in root .env}
+      PG_MIGRATOR_USER: ${PG_MIGRATOR_USER:-sql_detective_migrator}
+      PG_MIGRATOR_PASSWORD: ${PG_MIGRATOR_PASSWORD:?Set PG_MIGRATOR_PASSWORD in root .env}
+      PG_RO_USER: ${PG_RO_USER:-sql_detective_ro}
+      PG_RO_PASSWORD: ${PG_RO_PASSWORD:?Set PG_RO_PASSWORD in root .env}
+      PG_APP_USER: ${PG_APP_USER:-sql_detective_app}
+      PG_APP_PASSWORD: ${PG_APP_PASSWORD:?Set PG_APP_PASSWORD in root .env}
+      SQL_STATEMENT_TIMEOUT_MS: ${SQL_STATEMENT_TIMEOUT_MS:-5000}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-ai_sql_detective}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ../docker/backend.Dockerfile
+    container_name: ai-sql-detective-backend
+    restart: unless-stopped
+    profiles: ["full"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      DATABASE_RO_URL: postgresql+psycopg://${PG_RO_USER:-sql_detective_ro}:${PG_RO_PASSWORD:?Set PG_RO_PASSWORD in root .env}@postgres:5432/${POSTGRES_DB:-ai_sql_detective}
+      DATABASE_APP_URL: postgresql+psycopg://${PG_APP_USER:-sql_detective_app}:${PG_APP_PASSWORD:?Set PG_APP_PASSWORD in root .env}@postgres:5432/${POSTGRES_DB:-ai_sql_detective}
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_MODEL: ${LLM_MODEL:-gpt-4o-mini}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-false}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY:-}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-ai-sql-detective}
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    container_name: ai-sql-detective-frontend
+    restart: unless-stopped
+    profiles: ["full"]
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  /* Viewport-wide dark mode theming for native UI & scrollbars */
+  color-scheme: dark;
+
+  /* Tier 1: Literal Palette Tokens (.agent/roles.md) */
+  --palette-deep-navy: #0b1020;
+  --palette-dark-slate: #111827;
+  --palette-elevated-slate: #172033;
+  --palette-electric-indigo: #6366f1;
+  --palette-cyan: #22d3ee;
+  --palette-soft-white: #f8fafc;
+  --palette-slate-gray: #94a3b8;
+  --palette-subtle-slate: #263449;
+  --palette-emerald: #10b981;
+  --palette-amber: #f59e0b;
+  --palette-rose: #f43f5e;
+
+  /* Tier 2: Semantic UI Design Tokens */
+  --bg-canvas: var(--palette-deep-navy);
+  --bg-surface: var(--palette-dark-slate);
+  --bg-card: var(--palette-elevated-slate);
+  --accent-primary: var(--palette-electric-indigo);
+  --accent-secondary: var(--palette-cyan);
+  --text-primary: var(--palette-soft-white);
+  --text-secondary: var(--palette-slate-gray);
+  --border-subtle: var(--palette-subtle-slate);
+  --status-success: var(--palette-emerald);
+  --status-warning: var(--palette-amber);
+  --status-error: var(--palette-rose);
+
+  /* Browser UI customization */
+  --scrollbar-track: var(--bg-canvas);
+  --scrollbar-thumb: var(--border-subtle);
+  accent-color: var(--accent-primary);
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+@theme inline {
+  --color-canvas: var(--bg-canvas);
+  --color-surface: var(--bg-surface);
+  --color-card: var(--bg-card);
+  --color-accent-primary: var(--accent-primary);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border-subtle: var(--border-subtle);
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-error: var(--status-error);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html,
+  body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code,
+  pre,
+  kbd {
+    font-family: var(--font-mono);
+  }
+
+  ::selection {
+    background-color: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+    color: var(--text-primary);
+  }
+
+  :where(a:any-link, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+  }
+}
+
+.skip-link:where(:not(:focus-within, :active)) {
+  position: absolute;
+  clip-path: inset(50%);
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
+}
+
+/* Legacy scrollbar fallback for browsers without scrollbar-color support */
+@supports not (scrollbar-color: auto) {
+  html {
+    scrollbar-width: auto;
+  }
+
+  html::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  html::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+  }
+
+  html::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+  }
+}

@@ -1,0 +1,215 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend Lint & Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install backend dependencies
+        run: uv sync --frozen --extra dev
+
+      - name: Ruff lint check
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Run unit, security & secrets hygiene tests
+        run: uv run pytest -m "not integration" -v
+
+  backend-integration:
+    name: Backend PostgreSQL 16 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [backend]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ai_sql_detective
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-${{ github.run_id }}-pg
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U postgres -d ai_sql_detective"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      POSTGRES_DB: ai_sql_detective
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ci-${{ github.run_id }}-pg
+      PG_MIGRATOR_USER: sql_detective_migrator
+      PG_MIGRATOR_PASSWORD: ci-${{ github.run_id }}-mig
+      PG_RO_USER: sql_detective_ro
+      PG_RO_PASSWORD: ci-${{ github.run_id }}-ro
+      PG_APP_USER: sql_detective_app
+      PG_APP_PASSWORD: ci-${{ github.run_id }}-app
+      DATABASE_RO_URL: postgresql+psycopg://sql_detective_ro:ci-${{ github.run_id }}-ro@127.0.0.1:5432/ai_sql_detective
+      DATABASE_APP_URL: postgresql+psycopg://sql_detective_app:ci-${{ github.run_id }}-app@127.0.0.1:5432/ai_sql_detective
+      DATABASE_MIGRATOR_URL: postgresql+psycopg://sql_detective_migrator:ci-${{ github.run_id }}-mig@127.0.0.1:5432/ai_sql_detective
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Provision isolated schemas and least-privilege roles
+        run: |
+          PGHOST=127.0.0.1 PGPORT=5432 PGPASSWORD="$POSTGRES_PASSWORD" \
+            bash docker/postgres/init/01_init_roles.sh
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: uv sync --frozen --extra dev
+
+      - name: Verify reversible Alembic migrations
+        working-directory: backend
+        run: |
+          uv run alembic upgrade head
+          uv run alembic downgrade base
+          uv run alembic upgrade head
+
+      - name: Run deterministic synthetic seed
+        working-directory: backend
+        run: uv run python -m app.modules.database.seed
+
+      - name: Run live PostgreSQL 16 integration tests
+        working-directory: backend
+        run: uv run pytest -m integration -v
+
+  frontend:
+    name: Frontend Typecheck, Lint & Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: TypeScript typecheck
+        run: npx tsc --noEmit
+
+      - name: ESLint check
+        run: npm run lint
+
+      - name: Next.js production build
+        run: npm run build
+
+  e2e:
+    name: Playwright End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [backend-integration, frontend]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: ai_sql_detective
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-${{ github.run_id }}-pg
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd="pg_isready -U postgres -d ai_sql_detective"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      POSTGRES_DB: ai_sql_detective
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ci-${{ github.run_id }}-pg
+      PG_MIGRATOR_USER: sql_detective_migrator
+      PG_MIGRATOR_PASSWORD: ci-${{ github.run_id }}-mig
+      PG_RO_USER: sql_detective_ro
+      PG_RO_PASSWORD: ci-${{ github.run_id }}-ro
+      PG_APP_USER: sql_detective_app
+      PG_APP_PASSWORD: ci-${{ github.run_id }}-app
+      DATABASE_RO_URL: postgresql+psycopg://sql_detective_ro:ci-${{ github.run_id }}-ro@127.0.0.1:5432/ai_sql_detective
+      DATABASE_APP_URL: postgresql+psycopg://sql_detective_app:ci-${{ github.run_id }}-app@127.0.0.1:5432/ai_sql_detective
+      DATABASE_MIGRATOR_URL: postgresql+psycopg://sql_detective_migrator:ci-${{ github.run_id }}-mig@127.0.0.1:5432/ai_sql_detective
+      CORS_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:8000
+      E2E_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Provision PostgreSQL roles, migrate & seed
+        run: |
+          PGHOST=127.0.0.1 PGPORT=5432 PGPASSWORD="$POSTGRES_PASSWORD" \
+            bash docker/postgres/init/01_init_roles.sh
+          uv sync --directory backend --frozen --extra dev
+          uv run --directory backend alembic upgrade head
+          uv run --directory backend python -m app.modules.database.seed
+
+      - name: Build frontend and install Chromium
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+          npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E suite against live stack
+        run: |
+          uv run --directory backend uvicorn app.main:create_app --factory --host 127.0.0.1 --port 8000 &
+          BACKEND_PID=$!
+          npm --prefix frontend run start -- -p 3000 -H 127.0.0.1 &
+          FRONTEND_PID=$!
+          trap "kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true" EXIT
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:8000/api/v1/health >/dev/null && curl -sf http://127.0.0.1:3000 >/dev/null && break
+            sleep 0.5
+          done
+          npm --prefix frontend run test:e2e
