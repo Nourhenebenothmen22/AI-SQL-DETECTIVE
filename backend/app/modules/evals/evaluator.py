@@ -152,7 +152,11 @@ def evaluate_test_case(
         )
 
     # 4. Execute Candidate SQL against PostgreSQL 16
-    cand_exec: ExecutionResult = executor.execute_query(val.validated_sql, spec)
+    cand_exec: ExecutionResult = executor.execute(
+        val.validated_sql,
+        spec,
+        include_explain=False,
+    )
     elapsed_ms = (time.perf_counter() - start_time) * 1000
 
     if cand_exec.status != "success":
