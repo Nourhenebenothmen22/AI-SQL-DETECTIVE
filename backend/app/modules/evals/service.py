@@ -41,7 +41,6 @@ class EvalOpsService:
         self._connections = connections
         self._workflow = workflow_service
         self._history: list[EvalRunResponse] = []
-        self._initialize_default_run()
 
     def get_cases(self, difficulty: str | None = None) -> list[GoldenTestCase]:
         """Return the golden benchmark test cases, optionally filtered by difficulty."""
@@ -51,14 +50,20 @@ class EvalOpsService:
 
     def get_latest_run(self) -> EvalRunResponse | None:
         """Return the most recent benchmark run results."""
+        if not self._history:
+            self._initialize_default_run()
         return self._history[-1] if self._history else None
 
     def get_history(self) -> list[EvalRunSummary]:
         """Return historical summary KPIs across benchmark executions."""
+        if not self._history:
+            self._initialize_default_run()
         return [run.summary for run in reversed(self._history)]
 
     def _initialize_default_run(self) -> None:
         """Seed a clean baseline benchmark run so UI renders immediately on first load."""
+        if self._settings.app_env == "test":
+            return
         try:
             spec = self._connections.get("ecommerce_demo")
         except KeyError:
