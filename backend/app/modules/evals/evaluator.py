@@ -193,7 +193,10 @@ def evaluate_test_case(
         golden_row_count=golden_exec.row_count,
         candidate_row_count=cand_exec.row_count,
         latency_ms=round(elapsed_ms, 2),
-        error_message=None if matches else (
-            f"Returned {cand_exec.row_count} row(s), expected {golden_exec.row_count} matching ground truth."
+        error_message=None
+        if matches
+        else (
+            f"Returned {cand_exec.row_count} row(s), "
+            f"expected {golden_exec.row_count} matching ground truth."
         ),
     )
