@@ -75,8 +75,9 @@ async def run_benchmark(
     context: RequestContext = Depends(get_current_context),
 ) -> EvalRunResponse:
     """Execute the golden queries against the LLM pipeline or mock baseline."""
-    spec = connection_registry.get_connection("ecommerce_demo")
-    if spec is None:
+    try:
+        spec = connection_registry.get("ecommerce_demo")
+    except KeyError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Target database connection 'ecommerce_demo' is not configured.",

@@ -59,8 +59,9 @@ class EvalOpsService:
 
     def _initialize_default_run(self) -> None:
         """Seed a clean baseline benchmark run so UI renders immediately on first load."""
-        spec = self._connections.get_connection("ecommerce_demo")
-        if spec is None:
+        try:
+            spec = self._connections.get("ecommerce_demo")
+        except KeyError:
             return
 
         results: list[EvalCaseResult] = []
