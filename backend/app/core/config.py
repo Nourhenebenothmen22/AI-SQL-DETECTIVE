@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     app_env: Literal["development", "test", "production"] = "development"
     app_debug: bool = False
     log_level: str = "INFO"
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     # Required Database DSNs (loaded exclusively from environment / root .env)
     database_ro_url: SecretStr = Field(
