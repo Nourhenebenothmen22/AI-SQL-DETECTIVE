@@ -185,9 +185,12 @@ class EvalOpsService:
             results.append(case_result)
 
         run_id = f"bench_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
+        display_model = (
+            f"{model_label} (Ground Truth Mock)" if request.mock_run else model_label
+        )
         summary = self._compute_summary(
             run_id=run_id,
-            model_name=model_label if not request.mock_run else f"{model_label} (Ground Truth Mock)",
+            model_name=display_model,
             results=results,
         )
 

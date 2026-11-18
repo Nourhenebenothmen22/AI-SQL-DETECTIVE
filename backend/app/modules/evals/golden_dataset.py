@@ -10,7 +10,7 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
             "SELECT id, name, unit_price FROM ecommerce.products "
             "WHERE is_active = true ORDER BY unit_price DESC LIMIT 5;"
         ),
-        description="Tests single-table filtering on boolean flag and descending numeric sort with LIMIT.",
+        description="Single-table boolean filtering and numeric sort with LIMIT.",
     ),
     GoldenTestCase(
         id="golden_02",
@@ -21,7 +21,7 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
             "SELECT segment, COUNT(*) AS customer_count FROM ecommerce.customers "
             "GROUP BY segment ORDER BY customer_count DESC;"
         ),
-        description="Tests straightforward GROUP BY aggregation with descending count ordering.",
+        description="Straightforward GROUP BY aggregation with descending ordering.",
     ),
     GoldenTestCase(
         id="golden_03",
@@ -29,13 +29,14 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
         category="Joins & Aggregation",
         difficulty="medium",
         golden_sql=(
-            "SELECT c.segment, COUNT(o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS total_revenue "
+            "SELECT c.segment, COUNT(o.id) AS order_count, "
+            "ROUND(SUM(o.total_amount), 2) AS total_revenue "
             "FROM ecommerce.orders o "
             "JOIN ecommerce.customers c ON c.id = o.customer_id "
             "WHERE o.status = 'delivered' "
             "GROUP BY c.segment ORDER BY total_revenue DESC;"
         ),
-        description="Tests 2-table join between orders and customers with status filtering and numeric rounding.",
+        description="2-table join with status filtering and numeric rounding.",
     ),
     GoldenTestCase(
         id="golden_04",
@@ -51,7 +52,7 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
             "WHERE o.status = 'delivered' "
             "GROUP BY cat.name ORDER BY total_units_sold DESC LIMIT 5;"
         ),
-        description="Tests complex 4-table join traversals through order items and categories.",
+        description="Complex 4-table join traversals through order items and categories.",
     ),
     GoldenTestCase(
         id="golden_05",
@@ -65,7 +66,7 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
             "WHERE i.stock_quantity < i.reorder_level "
             "ORDER BY i.stock_quantity ASC LIMIT 10;"
         ),
-        description="Tests comparative column filtering across join boundaries.",
+        description="Comparative column filtering across join boundaries.",
     ),
     GoldenTestCase(
         id="golden_06",
@@ -73,12 +74,13 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
         category="Aggregation",
         difficulty="medium",
         golden_sql=(
-            "SELECT payment_method, COUNT(*) AS payment_count, ROUND(SUM(amount), 2) AS total_paid "
+            "SELECT payment_method, COUNT(*) AS payment_count, "
+            "ROUND(SUM(amount), 2) AS total_paid "
             "FROM ecommerce.payments "
             "WHERE status = 'captured' "
             "GROUP BY payment_method ORDER BY total_paid DESC;"
         ),
-        description="Tests payment status semantics and sum aggregation.",
+        description="Payment status semantics and sum aggregation.",
     ),
     GoldenTestCase(
         id="golden_07",
@@ -86,14 +88,15 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
         category="HAVING & Aggregation",
         difficulty="hard",
         golden_sql=(
-            "SELECT p.name AS product_name, ROUND(AVG(r.rating), 2) AS avg_rating, COUNT(r.id) AS review_count "
+            "SELECT p.name AS product_name, ROUND(AVG(r.rating), 2) AS avg_rating, "
+            "COUNT(r.id) AS review_count "
             "FROM ecommerce.reviews r "
             "JOIN ecommerce.products p ON p.id = r.product_id "
             "GROUP BY p.id, p.name "
             "HAVING COUNT(r.id) >= 3 "
             "ORDER BY avg_rating DESC, review_count DESC LIMIT 5;"
         ),
-        description="Tests HAVING clause filtering on aggregate review counts with dual-column sorting.",
+        description="HAVING clause filtering on aggregate review counts with dual-column sorting.",
     ),
     GoldenTestCase(
         id="golden_08",
@@ -107,7 +110,7 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
             "WHERE status = 'delivered' AND placed_at >= '2025-01-01' AND placed_at < '2026-01-01' "
             "GROUP BY DATE_TRUNC('month', placed_at) ORDER BY order_month ASC;"
         ),
-        description="Tests DATE_TRUNC timestamp grouping and bounded interval date filtering.",
+        description="DATE_TRUNC timestamp grouping and bounded interval date filtering.",
     ),
     GoldenTestCase(
         id="golden_09",
@@ -115,13 +118,14 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
         category="Multi-Join & Ranking",
         difficulty="hard",
         golden_sql=(
-            "SELECT c.id AS customer_id, c.full_name, c.segment, ROUND(SUM(o.total_amount), 2) AS lifetime_spend "
+            "SELECT c.id AS customer_id, c.full_name, c.segment, "
+            "ROUND(SUM(o.total_amount), 2) AS lifetime_spend "
             "FROM ecommerce.customers c "
             "JOIN ecommerce.orders o ON o.customer_id = c.id "
             "WHERE o.status = 'delivered' "
             "GROUP BY c.id, c.full_name, c.segment ORDER BY lifetime_spend DESC LIMIT 3;"
         ),
-        description="Tests customer lifetime value aggregation with multiple non-aggregate group keys.",
+        description="Customer lifetime value aggregation with multiple non-aggregate group keys.",
     ),
     GoldenTestCase(
         id="golden_10",
@@ -129,13 +133,14 @@ GOLDEN_BENCHMARK_CASES: list[GoldenTestCase] = [
         category="Geographic & Distinct",
         difficulty="hard",
         golden_sql=(
-            "SELECT a.state, COUNT(DISTINCT o.id) AS order_count, ROUND(SUM(o.total_amount), 2) AS state_revenue "
+            "SELECT a.state, COUNT(DISTINCT o.id) AS order_count, "
+            "ROUND(SUM(o.total_amount), 2) AS state_revenue "
             "FROM ecommerce.orders o "
             "JOIN ecommerce.customers c ON c.id = o.customer_id "
             "JOIN ecommerce.addresses a ON a.customer_id = c.id "
             "WHERE o.status = 'delivered' AND a.is_default = true "
             "GROUP BY a.state ORDER BY state_revenue DESC LIMIT 5;"
         ),
-        description="Tests COUNT(DISTINCT) over multi-table joins to avoid fanout cartesian inflation.",
+        description="COUNT(DISTINCT) over multi-table joins to avoid fanout cartesian inflation.",
     ),
 ]
