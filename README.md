@@ -172,17 +172,17 @@ Pour éviter la saturation de la mémoire et les faux positifs de troncature :
 
 ## 🖥️ Catalogue des Fonctionnalités Clés
 
-AI SQL Detective propose une interface SaaS moderne, dark-first, développée avec les tokens de design officiels (`#0B1020`, `#111827`, `#172033`, `#6366F1`, `#22D3EE`) :
+AI SQL Detective propose une interface DevTools haut de gamme (style Linear, Supabase, Vercel) articulée autour du thème **Obsidian Dark Workbench** (palette officielle `#070A12`, `#0D121F`, `#131B2E`, `#1E2B45`, `#6366F1`, `#06B6D4`, `#10B981`) avec alignement numérique strict `tabular-nums`, bordures de précision et contraste certifié WCAG AAA :
 
 | Composant UI | Description & Capacités |
 |:---|:---|
-| **Schema Explorer** | Arborescence pliable des 9 tables e-commerce (`customers`, `orders`, etc.), avec recherche instantanée, détection visuelle des clés primaires (PK), clés étrangères (FK), types de données et nombre de lignes estimé. |
-| **NL-to-SQL Composer** | Saisie en langage naturel avec boutons d'exemples rapides, suivi de progression interactif sur 6 étapes et affichage transparent du SQL généré. |
-| **Monaco SQL Editor** | Éditeur de code intégré avec coloration syntaxique PostgreSQL sombre, indentation automatique, exécution au clavier (`Ctrl+Enter`) et indicateur d'état certifié `READ-ONLY`. |
-| **Grille de Résultats Interactive** | Tableau de données fluide, tri multi-colonnes, formatage typé (dates, montants, badges `NULL`), alerte de troncature et export instantané au format CSV. |
-| **Security & Review Panel** | Rapport détaillé affichant le statut déterministe (`PASSED` / `BLOCKED`), la liste des 6 règles vérifiées par l'AST et les notes de révision sémantique. |
-| **Optimization Panel** | Synthèse des métriques du plan `EXPLAIN (FORMAT JSON)` (coût total, nœud racine, scan séquentiel détecté) et propositions d'index B-Tree composites adaptées. |
-| **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables. |
+| **Schema Explorer** | Arborescence pliable des 9 tables e-commerce (`customers`, `orders`, etc.), avec recherche instantanée, détection visuelle des clés primaires (`PK`), clés étrangères (`FK`), types de données et nombre de lignes estimé. |
+| **NL-to-SQL Composer** | Saisie en langage naturel inspirée de Linear/Perplexity avec boutons "pills" d'exemples rapides, suivi de progression interactif sur 6 étapes ordonnées (SSE) et affichage transparent du SQL généré. |
+| **Monaco SQL Editor** | Éditeur professionnel intégré avec le thème sombre dédié `ai-sql-detective-dark`, coloration syntaxique PostgreSQL, indentation automatique, exécution au clavier (`Ctrl+Enter` / `Ctrl+↵`) et badge d'état certifié `READ-ONLY`. |
+| **Grille de Résultats Interactive** | Tableau de données fluide avec en-têtes collants (*sticky headers*), zébrures douces, tri multi-colonnes (`aria-sort`), formatage typé (dates, devises, badges pour `NULL`), alerte de troncature et export instantané au format CSV. |
+| **Security & Review Panel** | Rapport détaillé affichant le statut déterministe (`PASSED` / `BLOCKED`), la liste des 6 règles vérifiées par l'AST SQLGlot et les notes de révision sémantique. |
+| **Optimization Panel** | Synthèse des métriques du plan `EXPLAIN (FORMAT JSON)` (coût total, nœud racine, scan séquentiel détecté) et propositions d'index B-Tree composites avec copie en un clic. |
+| **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques modernisés intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables (tooltips Obsidian Dark avec police JetBrains Mono). |
 | **Audit & History Log** | Consultation des exécutions passées paginées, filtrage par statut et bouton de rechargement direct dans le Workbench via le paramètre d'URL `?runId=`. |
 
 ---
@@ -247,10 +247,20 @@ DATABASE_RO_URL=postgresql+psycopg://sql_detective_ro:votre_mot_de_passe_ro_loca
 DATABASE_APP_URL=postgresql+psycopg://sql_detective_app:votre_mot_de_passe_app_local@localhost:5434/ai_sql_detective
 DATABASE_MIGRATOR_URL=postgresql+psycopg://sql_detective_migrator:votre_mot_de_passe_migrator_local@localhost:5434/ai_sql_detective
 
+# Configuration CORS (Requis pour l'accès web local & les tests Playwright)
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+
 # Configuration LLM (Optionnelle pour la saisie manuelle, requise pour le langage naturel)
+# Option A : OpenAI Direct
 LLM_PROVIDER=openai
 LLM_MODEL=gpt-4o-mini
 LLM_API_KEY=sk-...
+
+# Option B : OpenRouter (Modèles gratuits ou open-source)
+# LLM_PROVIDER=openai
+# LLM_BASE_URL=https://openrouter.ai/api/v1
+# LLM_MODEL=nvidia/nemotron-3.5-lightning:free
+# LLM_API_KEY=sk-or-v1-...
 ```
 
 ---
@@ -312,6 +322,7 @@ docker compose --profile full up --build
 L'architecture supporte nativement plusieurs fournisseurs LLM grâce à `init_chat_model` de LangChain :
 
 *   **OpenAI (Par défaut) :** `LLM_PROVIDER=openai`, `LLM_MODEL=gpt-4o-mini`, `LLM_API_KEY=sk-...`
+*   **OpenRouter (Recommandé pour tester sans quota OpenAI) :** Définissez `LLM_PROVIDER=openai`, `LLM_BASE_URL=https://openrouter.ai/api/v1`, votre clé `LLM_API_KEY=sk-or-v1-...`, et choisissez un modèle comme `nvidia/nemotron-3.5-lightning:free` (100% gratuit et rapide) ou `openai/gpt-4o-mini`.
 *   **Anthropic :** `LLM_PROVIDER=anthropic`, `LLM_MODEL=claude-3-5-sonnet-20241022` (installez le package avec `uv sync --extra anthropic`)
 *   **Google Gemini :** `LLM_PROVIDER=google_genai`, `LLM_MODEL=gemini-1.5-pro` (installez le package avec `uv sync --extra google`)
 *   **Passerelles Compatibles OpenAI (Local/Ollama/vLLM) :** Définissez `LLM_PROVIDER=openai` et configurez `LLM_BASE_URL=http://localhost:11434/v1`.
@@ -372,11 +383,12 @@ AI SQL DETECTIVE
 │
 ├── Frontend (Next.js 15.5.29 / React 19)
 │   ├── TypeScript Strict          # Typage rigoureux bout-en-bout
-│   ├── Tailwind CSS               # Design tokens dark-first sur-mesure
-│   ├── Monaco Editor              # Éditeur SQL interactif avec thème sombre
-│   ├── Recharts                   # Visualisation analytique (5 figures)
+│   ├── Obsidian Dark Workbench    # Design tokens DevTools (#070A12, #0D121F, #131B2E, #1E2B45)
+│   ├── Tailwind CSS v4            # Utility-first styling avec tabular-nums natifs
+│   ├── Monaco Editor              # Thème dédié ai-sql-detective-dark & raccourci Ctrl+Enter
+│   ├── Recharts                   # Visualisation analytique (5 figures harmonisées)
 │   ├── TanStack Query             # Gestion d'état serveur et cache réactif
-│   └── Lucide React               # Iconographie disciplinée
+│   └── Lucide React               # Iconographie unifiée à 16px
 │
 └── Infrastructure & Tests
     ├── Docker & Docker Compose    # Environnement de développement et production
