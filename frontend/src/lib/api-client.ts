@@ -271,4 +271,24 @@ export const apiClient = {
       signal,
     });
   },
+
+  getEvalCases(difficulty?: string, signal?: AbortSignal): Promise<GoldenTestCase[]> {
+    const qs = difficulty ? `?difficulty=${encodeURIComponent(difficulty)}` : "";
+    return requestJson<GoldenTestCase[]>(`/api/v1/evals/cases${qs}`, { signal });
+  },
+
+  getLatestEvalRun(signal?: AbortSignal): Promise<EvalRunResponse> {
+    return requestJson<EvalRunResponse>("/api/v1/evals/latest", { signal });
+  },
+
+  getEvalHistory(signal?: AbortSignal): Promise<EvalRunSummary[]> {
+    return requestJson<EvalRunSummary[]>("/api/v1/evals/history", { signal });
+  },
+
+  runBenchmark(payload: EvalRunRequest): Promise<EvalRunResponse> {
+    return requestJson<EvalRunResponse>("/api/v1/evals/run", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
 };

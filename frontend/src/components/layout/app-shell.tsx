@@ -2,6 +2,7 @@
 
 import {
   Activity,
+  FlaskConical,
   History,
   Lock,
   Menu,
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 const NAV_ITEMS = [
   { href: "/", label: "Workbench", icon: TerminalSquare },
   { href: "/analytics", label: "Analytics", icon: Activity },
+  { href: "/evals", label: "EvalOps", icon: FlaskConical },
   { href: "/history", label: "History", icon: History },
 ] as const;
 
