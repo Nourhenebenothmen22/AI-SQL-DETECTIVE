@@ -183,7 +183,7 @@ test.describe("AI SQL Detective — End-to-End Workbench, Security, SSE, Analyti
     ).toBeVisible();
 
     // Verify key KPI cards render
-    await expect(page.getByText("Execution Accuracy (EX)")).toBeVisible();
+    await expect(page.getByText("Execution Accuracy (EX)", { exact: true })).toBeVisible();
     await expect(page.getByText("Valid AST Rate (VAST)")).toBeVisible();
     await expect(page.getByText("Golden Suite Size")).toBeVisible();
 
