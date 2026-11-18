@@ -35,8 +35,8 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-4">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-accent-primary/40 bg-accent-primary/15 text-accent-primary">
+        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-accent-primary/40 bg-accent-primary/15 text-accent-primary shadow-xs shadow-accent-primary/20">
             <TerminalSquare className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
@@ -68,10 +68,10 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
               aria-current={active ? "page" : undefined}
               onClick={() => setMobileNavOpen(false)}
               className={cn(
-                "flex min-h-9 items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-150",
+                "flex min-h-9 items-center gap-2.5 rounded-md px-3 py-2 text-xs font-medium transition-all duration-150",
                 active
-                  ? "border border-border-subtle bg-card text-text-primary"
-                  : "border border-transparent text-text-secondary hover:bg-card/60 hover:text-text-primary",
+                  ? "border border-border-subtle bg-card text-text-primary shadow-xs"
+                  : "border border-transparent text-text-secondary hover:bg-card-hover hover:text-text-primary",
               )}
             >
               <Icon
@@ -85,7 +85,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
       </nav>
 
       <div className="border-t border-border-subtle p-3">
-        <div className="rounded-md border border-border-subtle bg-card p-3">
+        <div className="rounded-lg border border-border-subtle bg-card p-3 shadow-xs">
           <div className="flex items-center gap-2 text-xs font-medium text-status-success">
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             <span>Deterministic Guard</span>
@@ -111,7 +111,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
     <div className="flex min-h-dvh bg-canvas text-text-primary">
       <a
         href="#main-content"
-        className="skip-link fixed left-3 top-3 z-50 rounded-md border border-accent-primary bg-card px-3 py-2 text-xs font-medium text-text-primary"
+        className="skip-link fixed left-3 top-3 z-50 rounded-md border border-accent-primary bg-card px-3 py-2 text-xs font-medium text-text-primary shadow-sm"
       >
         Skip to main content
       </a>
@@ -125,7 +125,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
       {mobileNavOpen ? (
         <div className="fixed inset-0 z-40 flex md:hidden" role="dialog" aria-label="Navigation">
           <div
-            className="fixed inset-0 bg-canvas/80"
+            className="fixed inset-0 bg-canvas/80 backdrop-blur-xs"
             onClick={() => setMobileNavOpen(false)}
             aria-hidden="true"
           />
@@ -136,7 +136,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
       ) : null}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface/95 px-4 py-2 backdrop-blur-xs lg:px-6">
+        <header className="sticky top-0 z-20 flex min-h-14 flex-wrap items-center justify-between gap-3 border-b border-border-subtle bg-surface/90 px-4 py-2 backdrop-blur-sm lg:px-6">
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -157,8 +157,8 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
                 healthLoading
                   ? "bg-status-warning"
                   : dbConnected
-                    ? "bg-status-success"
-                    : "bg-status-error",
+                    ? "bg-status-success shadow-xs shadow-status-success/50"
+                    : "bg-status-error shadow-xs shadow-status-error/50",
               )}
               aria-hidden="true"
             />
