@@ -383,60 +383,102 @@ Security is enforced through **defense in depth** across application, parser, da
 
 ---
 
-## 7. Premium UI/UX Design System
+## 7. Premium UI/UX Design System — Obsidian Dark Workbench
 
-AI SQL Detective must feel like a **polished, production-grade developer SaaS product**—focused, calm, high-contrast, and information-dense without clutter.
+AI SQL Detective is engineered as a **world-class, high-density developer SaaS workbench** adhering to the craft, contrast, and micro-interaction standards of **Linear, Supabase, Vercel, and Raycast**. The interface prioritizes calm focus, surgical visual hierarchy, extreme legibility, and effortless keyboard/mouse ergonomics.
 
-### 7.1 Visual Direction & References
-- **Aesthetic:** Dark-first developer workbench prioritizing legibility, crisp borders, restrained accents, and effortless keyboard/mouse ergonomics.
-- **Visual References (inspiration only—do not copy):** Linear, Vercel, Stripe, Supabase, Raycast.
+### 7.1 Visual Direction & Philosophy
+- **Aesthetic:** "Obsidian Dark Workbench" — high-contrast dark-first architecture, crisp 1px borders, purposeful elevation layering, and restrained, high-energy accents.
+- **Tone:** Technical, precise, authoritative, quiet. Zero consumer fluff, zero generic AI clichés, zero decorative-only visuals.
+- **Information Density:** High information density without visual noise. All technical metadata (SQL, AST rules, table rows, timings, cost plans) must be instantly readable without eye fatigue.
 
-### 7.2 Color Palette (Design Tokens)
+### 7.2 Color Architecture & Surface Elevation (Design Tokens)
 
-| Purpose | Color | Hex |
-|---|---|---|
-| Main background | Deep Navy | `#0B1020` |
-| Secondary background | Dark Slate | `#111827` |
-| Card background | Elevated Slate | `#172033` |
-| Primary accent | Electric Indigo | `#6366F1` |
-| Secondary accent | Cyan | `#22D3EE` |
-| Primary text | Soft White | `#F8FAFC` |
-| Secondary text | Slate Gray | `#94A3B8` |
-| Borders | Subtle Slate | `#263449` |
-| Success | Emerald | `#10B981` |
-| Warning | Amber | `#F59E0B` |
-| Error | Rose | `#F43F5E` |
+The system enforces a strict 4-tier elevation hierarchy paired with WCAG AAA accessible contrast ratios:
 
-### 7.3 Typography
-- **Interface & UI Copy:** `Inter` (clean typographic scale, tabular numerals `tabular-nums` for metrics, timings, and row counts).
-- **SQL, Schema Identifiers, Plan JSON & Technical Content:** `JetBrains Mono`.
+| Token Category | Token Name | Hex Code | Purpose & Semantic Role |
+|---|---|---|---|
+| **Canvas** | `bg-canvas` | `#070A12` | Deepest viewport ground (Obsidian Deep). |
+| **Surface** | `bg-surface` | `#0D121F` | Elevated structural chrome (sidebar, topbars, editor backgrounds). |
+| **Card / Panel** | `bg-card` | `#131B2E` | Component containers, table wrappers, panels, modular blocks. |
+| **Hover / Active** | `bg-card-hover` | `#1A243D` | Interactive card states, selected list rows, active tab containers. |
+| **Subtle Border** | `border-subtle` | `#1E2B45` | Structural 1px division borders, container perimeter framing. |
+| **Interactive Border** | `border-interactive` | `#3B82F6` | Focus rings, active inputs, drag boundaries, selected items. |
+| **Primary Accent** | `accent-primary` | `#6366F1` | Electric Indigo (`#6366F1`) with subtle glow halo (`#4F46E5`). Primary actions. |
+| **Secondary Accent**| `accent-secondary` | `#06B6D4` | Electric Cyan (`#06B6D4` / `#22D3EE`). Technical data, SQL syntax, live telemetry. |
+| **Success / Valid** | `status-success` | `#10B981` | Vibrant Emerald (`#10B981`). Verified Read-Only, AST security PASS, active DB. |
+| **Warning / Alert** | `status-warning` | `#F59E0B` | Deep Amber (`#F59E0B`). Query review advisories, explain scan warnings. |
+| **Error / Blocked** | `status-error` | `#F43F5E` | Neon Rose (`#F43F5E`). AST security violations, query errors, timeouts. |
+| **Primary Text** | `text-primary` | `#F8FAFC` | Soft White (`#F8FAFC`, 100% opacity). Headings, table cells, key values. |
+| **Secondary Text** | `text-secondary` | `#94A3B8` | Slate Gray (`#94A3B8`, WCAG AAA ratio > 7:1). Labels, descriptions, schema types. |
+| **Muted Text** | `text-muted` | `#64748B` | Slate Muted (`#64748B`). Inactive placeholders, shortcut keys, disabled chrome. |
 
-### 7.4 Iconography
-- Use **Lucide React exclusively** with consistent stroke widths and disciplined sizing (`14px`–`20px`). No emojis in UI chrome.
+### 7.3 Typographic Scale & Mathematical Rigor
+Typography follows a strict dual-font hierarchy:
+- **Interface & UI Copy:** `Inter` (or `Geist Sans`) for all human-readable titles, labels, badges, and explanatory text.
+- **Technical & Code Content:** `JetBrains Mono` (or `Geist Mono`) for SQL, table identifiers, JSON plans, timings, row counts, and status codes.
 
-### 7.5 Data Visualization (Recharts)
-Use **Recharts** strictly for meaningful, data-backed visuals styled with the design tokens above:
-- **Line charts:** Execution time and query performance trends.
-- **Bar charts:** Query/table/metric comparisons.
-- **Donut charts:** Query status distributions (passed, blocked, failed, optimized).
-- **Area charts:** Query activity over time.
-- **Horizontal bars:** Database statistics (table sizes, row counts, scan/index metrics).
+#### Strict Typographic Scale
+- `Page Title (H1)`: `20px` (`text-xl`), `font-semibold`, tracking tight (`tracking-tight`), `text-primary`.
+- `Section Header (H2)`: `15px` (`text-[15px]`), `font-medium`, `text-slate-100`.
+- `Card Title (H3)`: `13px`–`14px`, `font-semibold`, `text-slate-200`.
+- `Body Text`: `13px`–`14px`, regular leading (`leading-relaxed`), `text-secondary`.
+- `Technical Code / SQL`: `12px`–`13px`, monospace, crisp letter spacing.
+- `Badges & Micro-metrics`: `11px` (`text-[11px]`), `font-medium`, uppercase, tracking wide (`tracking-wider`).
 
-### 7.6 Core Interface Modules
-- **Professional developer sidebar:** Clean navigation, workspace status, and quick access to query history and database insights.
-- **Database connection selector:** Clear indicator of active database target, read-only badge, and connection health.
-- **Schema explorer:** Collapsible tree of tables, columns, data types, PK/FK indicators, and indexes with fast search/filtering.
-- **Natural-language input:** Focused prompt composer with example queries, execution trigger, and clear agent progress feedback.
-- **Monaco SQL editor:** PostgreSQL syntax highlighting, schema-aware ergonomics, formatting, and read-only/validated state indicators.
-- **Interactive results table:** Sortable, filterable, horizontally scrollable tabular grid with crisp type formatting, null badges, row-limit notices, and export options.
-- **AI explanation panel:** Structured natural-language explanation grounded in executed SQL and returned data.
-- **Query review and security status:** Explicit visual status badges showing Query Reviewer notes alongside deterministic Independent Security Gate verdict, rules checked, timeout, and enforced row limit.
-- **Optimization recommendations:** Actionable cards displaying `EXPLAIN (FORMAT JSON)` insights, estimated cost observations, and concrete index or query-rewrite suggestions.
+#### Mandatory Tabular Alignment Rule
+- All numeric metrics, execution durations (ms), row counts, monetary amounts, and timestamps **MUST** enforce the CSS rule:
+  ```css
+  font-variant-numeric: tabular-nums;
+  ```
+  This guarantees perfect vertical column alignment in tables, stat cards, and timers without horizontal jitter.
 
-### 7.7 Interaction & Craft Standards
-- Enforce consistent spacing scale, centralized CSS/Tailwind design tokens, responsive layouts, and WCAG AA accessible contrast.
-- Use subtle, purposeful transitions (`150ms`–`200ms`), skeleton loading states for async data, and meaningful empty and error states with clear recovery actions.
-- **Strictly avoid:** Generic AI dashboard clichés, excessive gradients, excessive glassmorphism, emojis, random unaligned colors, and purely decorative charts. The interface must look like a polished production SaaS product—never a student project or generic AI-generated template.
+### 7.4 Iconography & Visual Discipline
+- **Icon Library:** **Lucide React exclusively**. No other icon packages permitted.
+- **Sizing:** Strict scale of `14px` (micro/badges), `16px` (standard buttons/navigation), and `18px`–`20px` (hero headers).
+- **Stroke Width:** Disciplined `1.5px` stroke across all icons to preserve visual cohesion.
+- **Zero Emojis in Chrome:** Emojis are strictly forbidden in UI navigation, buttons, tables, badges, or dialog headers.
+
+### 7.5 Data Visualization Architecture (Recharts)
+All 5 dashboard charts must be rendered exclusively with **Recharts**, styled with the Obsidian Dark tokens:
+- **Execution Latency Trends:** Smooth `monotone` line chart with subtle Indigo (`#6366F1`) and Cyan (`#06B6D4`) strokes, dot highlights, and grid borders styled with `#1E2B45`.
+- **Query Status Distribution:** Donut chart (`innerRadius={50}`, `outerRadius={80}`) mapping cleanly to status colors (`#10B981`, `#06B6D4`, `#F59E0B`, `#F43F5E`).
+- **Query Activity Over Time:** Area chart with subtle vertical linear gradient fill (`#6366F1` at 20% to transparent).
+- **Recent Query Comparisons:** Clean bar chart comparing execution times.
+- **PostgreSQL Table Statistics:** Horizontal layout bar chart displaying live live table sizes and row counts.
+- **Tooltips:** Custom card container with `#131B2E` background, `#1E2B45` 1px border, JetBrains Mono font, and zero default browser drop shadows.
+
+### 7.6 Component Primitives & Micro-Interactions
+- **Border Radius Uniformity:**
+  - `rounded-lg` (`8px`) for outer cards, dialogs, and large panels.
+  - `rounded-md` (`6px`) for buttons, inputs, badge tags, and select triggers.
+  - `rounded-sm` (`4px`) for micro-pills, code tags, and keyboard shortcut chips.
+- **Focus & Selection States:**
+  - Standard focus ring: `outline-none ring-1 ring-accent-primary/60 border-accent-primary`.
+  - Active button states: subtle brightness increase (`brightness-110`) and gentle scale down (`active:scale-[0.99]`).
+- **Transitions & Timing:**
+  - Duration: Strictly capped at `150ms`–`200ms`.
+  - Easing Curve: `cubic-bezier(0.16, 1, 0.3, 1)` (Swift ease-out). Never use slow or bouncy animations.
+
+### 7.7 Core Interface Module Specifications
+1. **Sidebar Navigation:** Collapsible, ultra-thin border right (`#1E2B45`), subtle icon hover highlights, active tab indicator with electric indigo accent pill.
+2. **Connection Selector:** Header badge displaying active database target (`ecommerce_demo`), pulsing emerald indicator for live read-only connectivity, and schema isolation confirmation.
+3. **Natural-Language Input:** Elevate prompt composer, subtle indigo border on focus, quick-example pills with micro-hover lift, and responsive keyboard trigger (`Enter` / `Ctrl+Enter`).
+4. **SSE Progress Stepper (6 Stages):** Connected timeline stepper featuring animated pulsing indicators on active stages, crisp green checks on completion, and monospace elapsed duration (`duration_ms`).
+5. **Monaco SQL Editor:** Fully themed to match Obsidian Dark (`#0D121F` background, `#1E2B45` line numbers, indigo selection highlight), top toolbar with verified read-only badge and prominent "Run Read-Only" trigger.
+6. **Interactive Results Table:**
+   - Sticky header with sort directional indicators (`aria-sort`).
+   - Alternating subtle zebra striping (`hover:bg-white/[0.02]`).
+   - Typed formatting (right-aligned numbers, monospace IDs, badge for `NULL`, formatted dates).
+   - Bottom status bar with exact row count, limit ceiling indicator, execution timing in ms, and export button.
+7. **Security & Review Panel:** Two-column audit view displaying deterministic SQLGlot rule checklists alongside LLM semantic review notes.
+8. **Optimization Panel:** Advisory cards presenting `EXPLAIN (FORMAT JSON)` root node, total estimated cost, sequential scan alerts, and copyable B-Tree composite index recommendations.
+
+### 7.8 Quality Gate & Strictly Forbidden Anti-Patterns
+- **Forbidden:** Cluttered AI templates, excessive gradients, rainbow borders, glowing text, unaligned icons, student-project styles.
+- **Forbidden:** Decorative-only charts without underlying SQL data.
+- **Forbidden:** Heavy blur / unreadable glassmorphism that reduces text contrast below WCAG AAA standards.
+- **Forbidden:** Hardcoded inline hex styles; all components must reference Tailwind/CSS design tokens.
 
 ---
 
