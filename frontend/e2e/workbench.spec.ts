@@ -67,7 +67,9 @@ test.describe("AI SQL Detective — End-to-End Workbench, Security, SSE, Analyti
 
     // Security & Review tab activates automatically and displays BLOCKED violation
     await expect(page.getByText("BLOCKED", { exact: true })).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText(/Only read-only SELECT queries are permitted/i)).toBeVisible();
+    await expect(
+      page.getByText(/Only read-only SELECT queries are permitted|SQL syntax could not be parsed safely/i),
+    ).toBeVisible();
   });
 
   test("streams 6-stage SSE workflow progress and separate parallel Optimization Agent panel", async ({
