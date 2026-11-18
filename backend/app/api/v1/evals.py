@@ -81,5 +81,5 @@ async def run_benchmark(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Target database connection 'ecommerce_demo' is not configured.",
-        )
+        ) from None
     return await eval_service.run_benchmark(payload, spec, context)

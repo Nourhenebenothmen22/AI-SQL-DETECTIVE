@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -8,7 +9,7 @@ class GoldenTestCase(BaseModel):
 
     id: str = Field(..., description="Unique slug for the test case (e.g. golden_01).")
     question: str = Field(..., description="Natural language prompt.")
-    category: str = Field(..., description="Query category: Joins, Aggregation, Filtering, Subqueries.")
+    category: str = Field(..., description="Query category: Joins, Aggregation, Filtering.")
     difficulty: Literal["easy", "medium", "hard"] = Field(..., description="Complexity tier.")
     golden_sql: str = Field(..., description="Canonical PostgreSQL 16 read-only query.")
     description: str = Field(..., description="Business rationale and tested logic.")
@@ -22,7 +23,10 @@ class EvalCaseResult(BaseModel):
     difficulty: Literal["easy", "medium", "hard"]
     category: str
     status: Literal["passed", "mismatch", "error", "blocked"]
-    vast_passed: bool = Field(..., description="Whether candidate SQL passed deterministic AST Security Gate.")
+    vast_passed: bool = Field(
+        ...,
+        description="Whether candidate SQL passed deterministic AST Security Gate.",
+    )
     execution_accuracy: bool = Field(..., description="Whether returned data matches ground truth.")
     golden_sql: str
     generated_sql: str | None = None
@@ -75,5 +79,5 @@ class EvalRunRequest(BaseModel):
     difficulty: Literal["easy", "medium", "hard"] | None = None
     mock_run: bool = Field(
         default=False,
-        description="Run fast deterministic evaluation using golden queries for instant CI/demo validation.",
+        description="Run fast deterministic evaluation using golden queries for CI/demo.",
     )
