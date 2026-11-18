@@ -4,6 +4,7 @@ from app.core.config import Settings
 from app.core.context import RequestContext, get_request_context
 from app.modules.ai.service import DetectiveWorkflowService
 from app.modules.connections.registry import ConnectionRegistry
+from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
 from app.modules.security.gate import SecurityGate
@@ -37,6 +38,11 @@ def get_query_run_repository(request: Request) -> QueryRunRepository:
 def get_workflow_service(request: Request) -> DetectiveWorkflowService:
     """Provide the 7-agent LangGraph AI SQL Detective workflow service."""
     return request.app.state.workflow_service
+
+
+def get_eval_service(request: Request) -> EvalOpsService:
+    """Provide the EvalOps benchmarking and golden test suite service."""
+    return request.app.state.eval_service
 
 
 def get_current_context(
