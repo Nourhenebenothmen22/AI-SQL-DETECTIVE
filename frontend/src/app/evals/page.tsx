@@ -8,7 +8,6 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Code2,
   Copy,
   Cpu,
   Database,
@@ -17,7 +16,6 @@ import {
   Play,
   RotateCw,
   ShieldCheck,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -25,8 +23,8 @@ import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
-import { formatDurationMs, formatNumber } from "@/lib/format";
-import type { EvalCaseResult, EvalRunRequest } from "@/types/api";
+import { formatDurationMs } from "@/lib/format";
+import type { EvalRunRequest } from "@/types/api";
 
 export default function EvalsPage() {
   const queryClient = useQueryClient();
