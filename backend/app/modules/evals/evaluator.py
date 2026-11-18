@@ -134,7 +134,9 @@ def evaluate_test_case(
     )
     if not val.passed or val.validated_sql is None:
         elapsed_ms = (time.perf_counter() - start_time) * 1000
-        violation_summary = "; ".join(val.violations) if val.violations else "Security Gate rejected query."
+        violation_summary = (
+            "; ".join(val.violations) if val.violations else "Security Gate rejected query."
+        )
         return EvalCaseResult(
             case_id=case.id,
             question=case.question,
