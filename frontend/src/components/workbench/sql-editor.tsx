@@ -44,19 +44,20 @@ export function SqlEditor({
       rules: [
         { token: "keyword", foreground: "6366F1", fontStyle: "bold" },
         { token: "string", foreground: "10B981" },
-        { token: "number", foreground: "22D3EE" },
+        { token: "number", foreground: "06B6D4" },
         { token: "comment", foreground: "64748B", fontStyle: "italic" },
         { token: "operator", foreground: "94A3B8" },
+        { token: "delimiter", foreground: "94A3B8" },
       ],
       colors: {
-        "editor.background": "#0B1020",
+        "editor.background": "#070A12",
         "editor.foreground": "#F8FAFC",
-        "editor.lineHighlightBackground": "#172033",
+        "editor.lineHighlightBackground": "#0D121F",
         "editorLineNumber.foreground": "#64748B",
         "editorLineNumber.activeForeground": "#94A3B8",
-        "editor.selectionBackground": "#6366F144",
-        "editorCursor.foreground": "#22D3EE",
-        "editorGutter.background": "#0B1020",
+        "editor.selectionBackground": "#6366F135",
+        "editorCursor.foreground": "#06B6D4",
+        "editorGutter.background": "#070A12",
       },
     });
     monaco.editor.setTheme("ai-sql-detective-dark");
@@ -74,7 +75,7 @@ export function SqlEditor({
   };
 
   return (
-    <section className="overflow-hidden rounded-lg border border-border-subtle bg-card">
+    <section className="overflow-hidden rounded-lg border border-border-subtle bg-card shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-subtle bg-surface px-3.5 py-2">
         <div className="flex items-center gap-2.5">
           <Code2 className="h-4 w-4 text-accent-secondary" aria-hidden="true" />
@@ -128,8 +129,11 @@ export function SqlEditor({
             onClick={onExecute}
             disabled={isExecuting || !sql.trim()}
           >
-            <Play className="h-3.5 w-3.5" aria-hidden="true" />
+            <Play className="h-3.5 w-3.5 fill-current" aria-hidden="true" />
             <span>{isExecuting ? "Running..." : "Run Read-Only"}</span>
+            <kbd className="ml-0.5 hidden rounded bg-black/30 px-1 py-0.5 font-mono text-[10px] text-white/70 sm:inline-block">
+              Ctrl+↵
+            </kbd>
           </Button>
         </div>
       </div>
