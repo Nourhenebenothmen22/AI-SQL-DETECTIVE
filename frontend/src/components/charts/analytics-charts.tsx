@@ -23,13 +23,15 @@ import type { AnalyticsDashboardResponse } from "@/types/api";
 
 const COLORS = {
   indigo: "#6366F1",
-  cyan: "#22D3EE",
+  cyan: "#06B6D4",
+  cyanAccent: "#22D3EE",
   emerald: "#10B981",
   amber: "#F59E0B",
   rose: "#F43F5E",
-  border: "#263449",
+  border: "#1E2B45",
   axis: "#94A3B8",
-  card: "#172033",
+  card: "#131B2E",
+  surface: "#0D121F",
   text: "#F8FAFC",
 } as const;
 
@@ -47,6 +49,8 @@ const TOOLTIP_STYLE = {
   color: COLORS.text,
   fontSize: "12px",
   fontFamily: "var(--font-jetbrains-mono), monospace",
+  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)",
+  padding: "8px 12px",
 };
 
 function EmptyChart({ message }: { message: string }) {
