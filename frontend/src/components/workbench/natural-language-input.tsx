@@ -133,7 +133,7 @@ export function NaturalLanguageInput({
   const hasAnyActivity = stages.some((stage) => stage.status !== "idle");
 
   return (
-    <section className="rounded-lg border border-border-subtle bg-card p-4">
+    <section className="rounded-lg border border-border-subtle bg-card p-4 shadow-sm">
       <form onSubmit={handleFormSubmit} className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <label
@@ -151,23 +151,25 @@ export function NaturalLanguageInput({
         </div>
 
         <div className="flex flex-col gap-2 sm:flex-row">
-          <textarea
-            id="nl-question-input"
-            rows={2}
-            value={question}
-            onChange={(event) => onQuestionChange(event.target.value)}
-            onKeyDown={(event) => {
-              if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                event.preventDefault();
-                if (!isStreaming && question.trim().length >= 3) {
-                  onSubmit();
+          <div className="relative flex-1">
+            <textarea
+              id="nl-question-input"
+              rows={2}
+              value={question}
+              onChange={(event) => onQuestionChange(event.target.value)}
+              onKeyDown={(event) => {
+                if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                  event.preventDefault();
+                  if (!isStreaming && question.trim().length >= 3) {
+                    onSubmit();
+                  }
                 }
-              }
-            }}
-            placeholder="Ask a question about the ecommerce database (e.g., Top 10 customers by lifetime delivered spend)..."
-            aria-describedby="nl-question-hint"
-            className="min-h-14 flex-1 resize-y rounded-md border border-border-subtle bg-canvas px-3 py-2 text-sm text-text-primary placeholder:text-text-secondary/70"
-          />
+              }}
+              placeholder="Ask a question about the ecommerce database (e.g., Top 10 customers by lifetime delivered spend)..."
+              aria-describedby="nl-question-hint"
+              className="min-h-14 w-full resize-y rounded-md border border-border-subtle bg-surface/90 px-3.5 py-2.5 text-xs text-text-primary placeholder:text-text-secondary/60 shadow-xs transition-all focus:border-accent-primary focus:outline-none focus:ring-1 focus:ring-accent-primary/40"
+            />
+          </div>
 
           <div className="flex shrink-0 items-start gap-2 sm:flex-col">
             {isStreaming ? (
@@ -195,15 +197,15 @@ export function NaturalLanguageInput({
           </div>
         </div>
 
-        <div id="nl-question-hint" className="flex flex-wrap items-center gap-1.5">
-          <span className="text-[11px] text-text-secondary">Examples:</span>
+        <div id="nl-question-hint" className="flex flex-wrap items-center gap-1.5 pt-0.5">
+          <span className="text-[11px] font-medium text-text-muted">Examples:</span>
           {STARTER_QUESTIONS.map((sample) => (
             <button
               key={sample}
               type="button"
               disabled={isStreaming}
               onClick={() => onQuestionChange(sample)}
-              className="rounded border border-border-subtle bg-surface px-2 py-0.5 text-[11px] text-text-secondary transition-colors duration-150 hover:border-accent-primary/50 hover:text-text-primary disabled:opacity-50"
+              className="rounded-full border border-border-subtle bg-surface/70 px-2.5 py-0.5 text-[11px] text-text-secondary transition-all duration-150 hover:border-accent-primary/50 hover:bg-card-hover hover:text-text-primary disabled:opacity-50"
             >
               {sample}
             </button>
@@ -213,12 +215,12 @@ export function NaturalLanguageInput({
 
       {hasAnyActivity ? (
         <div className="mt-4 border-t border-border-subtle pt-3.5">
-          <div className="mb-2 flex items-center justify-between">
+          <div className="mb-2.5 flex items-center justify-between">
             <span className="font-mono text-[11px] uppercase tracking-wider text-text-secondary">
               Agent Execution Pipeline (6 Stages)
             </span>
             {isStreaming ? (
-              <Badge variant="indigo">Streaming SSE</Badge>
+              <Badge variant="indigo" className="animate-pulse">Streaming SSE</Badge>
             ) : null}
           </div>
 
@@ -227,16 +229,16 @@ export function NaturalLanguageInput({
               <li
                 key={item.stage}
                 className={cn(
-                  "rounded-md border px-2.5 py-2 transition-colors duration-150",
+                  "rounded-md border p-2.5 transition-all duration-150",
                   item.status === "running"
-                    ? "border-accent-primary/70 bg-accent-primary/10"
+                    ? "border-accent-primary/60 bg-accent-primary/10 shadow-xs shadow-accent-primary/15 ring-1 ring-accent-primary/30"
                     : item.status === "completed"
-                      ? "border-status-success/40 bg-surface"
+                      ? "border-status-success/40 bg-surface/90"
                       : item.status === "retrying"
                         ? "border-status-warning/50 bg-status-warning/10"
                         : item.status === "blocked" || item.status === "error"
                           ? "border-status-error/50 bg-status-error/10"
-                          : "border-border-subtle/70 bg-surface/60",
+                          : "border-border-subtle/70 bg-surface/40",
                 )}
               >
                 <div className="flex items-center justify-between gap-1.5">
@@ -257,7 +259,7 @@ export function NaturalLanguageInput({
                     {item.summary}
                   </p>
                 ) : (
-                  <p className="mt-1 font-mono text-[10px] text-text-secondary/60">
+                  <p className="mt-1 font-mono text-[10px] text-text-muted">
                     {item.status === "running" ? "In progress..." : "Pending"}
                   </p>
                 )}
@@ -270,7 +272,7 @@ export function NaturalLanguageInput({
       {streamError ? (
         <div
           role="alert"
-          className="mt-3 flex items-start gap-2 rounded-md border border-status-error/40 bg-status-error/10 px-3 py-2.5 text-xs"
+          className="mt-3 flex items-start gap-2 rounded-md border border-status-error/40 bg-status-error/10 px-3 py-2.5 text-xs shadow-xs"
         >
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-status-error" aria-hidden="true" />
           <div>
