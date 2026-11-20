@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 OPTIONAL_PROVIDER_EXTRAS: dict[str, str] = {
     "anthropic": "uv sync --extra anthropic",
-    "google_genai": "uv sync --extra google",
+    "google_genai": "uv add langchain-google-genai",
+    "mistralai": "uv add langchain-mistralai",
 }
 
 
@@ -43,40 +44,154 @@ def configure_langsmith_tracing(settings: Settings) -> bool:
     return True
 
 
-def build_chat_model(settings: Settings) -> BaseChatModel:
-    """Create a provider-agnostic LangChain chat model purely from Settings.
+def _call_init_chat_model(model: str, model_provider: str, **kwargs: Any) -> BaseChatModel:
+    try:
+        return init_chat_model(model=model, model_provider=model_provider, **kwargs)
+    except ImportError as exc:
+        install_hint = OPTIONAL_PROVIDER_EXTRAS.get(
+            model_provider,
+            f"install the LangChain integration package for '{model_provider}'",
+        )
+        raise LLMProviderPackageError(
+            f"LangChain adapter for LLM_PROVIDER='{model_provider}' is not installed. "
+            f"Install it via: {install_hint}."
+        ) from exc
 
-    Never hardcodes provider-specific branches or assumes local inference.
-    """
-    if not settings.is_llm_configured or settings.llm_api_key is None:
-        raise LLMConfigurationError(
-            f"LLM_API_KEY is not configured for provider '{settings.llm_provider}' "
-            f"(model '{settings.llm_model}'). Set LLM_API_KEY in root .env to enable "
-            "natural-language SQL workflows."
+
+def _instantiate_provider_model(provider_name: str, settings: Settings) -> BaseChatModel | None:
+    p = provider_name.strip().lower()
+
+    if p == "openai":
+        key = settings.openai_api_key or (
+            settings.llm_api_key if settings.llm_provider == "openai" else None
+        )
+        if not key or not key.get_secret_value().strip():
+            return None
+        model_name = settings.openai_model if settings.openai_api_key else settings.llm_model
+        kwargs: dict[str, Any] = {
+            "temperature": settings.llm_temperature,
+            "timeout": settings.llm_timeout_seconds,
+            "api_key": key.get_secret_value(),
+        }
+        if settings.llm_base_url:
+            kwargs["base_url"] = settings.llm_base_url
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="openai",
+            **kwargs,
         )
 
-    kwargs: dict[str, Any] = {
-        "temperature": settings.llm_temperature,
-        "timeout": settings.llm_timeout_seconds,
-        "api_key": settings.llm_api_key.get_secret_value(),
-    }
-    if settings.llm_base_url:
-        kwargs["base_url"] = settings.llm_base_url
+    if p in ("google", "google_genai", "gemini"):
+        key = settings.google_api_key or (
+            settings.llm_api_key if settings.llm_provider == "google_genai" else None
+        )
+        if not key or not key.get_secret_value().strip():
+            return None
+        model_name = settings.google_model or "gemini-2.0-flash"
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="google_genai",
+            temperature=settings.llm_temperature,
+            timeout=settings.llm_timeout_seconds,
+            api_key=key.get_secret_value(),
+        )
 
-    try:
-        model = init_chat_model(
+    if p in ("mistral", "mistralai"):
+        key = settings.mistral_api_key or (
+            settings.llm_api_key if settings.llm_provider in ("mistral", "mistralai") else None
+        )
+        if not key or not key.get_secret_value().strip():
+            return None
+        model_name = settings.mistral_model or "mistral-small-latest"
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="mistralai",
+            temperature=settings.llm_temperature,
+            timeout=settings.llm_timeout_seconds,
+            api_key=key.get_secret_value(),
+        )
+
+    if p == "openrouter":
+        key = settings.openrouter_api_key or (
+            settings.llm_api_key
+            if settings.llm_base_url and "openrouter" in settings.llm_base_url
+            else None
+        )
+        if not key or not key.get_secret_value().strip():
+            return None
+        model_name = settings.openrouter_model or "deepseek/deepseek-chat"
+        base_url = settings.openrouter_base_url or "https://openrouter.ai/api/v1"
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="openai",
+            temperature=settings.llm_temperature,
+            timeout=settings.llm_timeout_seconds,
+            api_key=key.get_secret_value(),
+            base_url=base_url,
+        )
+
+    # Generic provider fallback from settings.llm_provider
+    if settings.llm_api_key and settings.llm_api_key.get_secret_value().strip():
+        kwargs = {
+            "temperature": settings.llm_temperature,
+            "timeout": settings.llm_timeout_seconds,
+            "api_key": settings.llm_api_key.get_secret_value(),
+        }
+        if settings.llm_base_url:
+            kwargs["base_url"] = settings.llm_base_url
+        return _call_init_chat_model(
             model=settings.llm_model,
             model_provider=settings.llm_provider,
             **kwargs,
         )
-    except ImportError as exc:
-        install_hint = OPTIONAL_PROVIDER_EXTRAS.get(
-            settings.llm_provider,
-            f"install the LangChain integration package for '{settings.llm_provider}'",
-        )
-        raise LLMProviderPackageError(
-            f"LangChain adapter for LLM_PROVIDER='{settings.llm_provider}' is not installed. "
-            f"Install it via: {install_hint}."
-        ) from exc
 
-    return model
+    return None
+
+
+def build_chat_model(settings: Settings) -> BaseChatModel:
+    """Create a resilient, provider-agnostic LangChain chat model with automated failover.
+
+    If multiple providers are configured in LLM_FALLBACK_CHAIN (e.g. OpenAI, Google,
+    Mistral, OpenRouter), wraps the primary model with LangChain's .with_fallbacks()
+    to guarantee zero downtime on token expiration or quota limits.
+    """
+    chain_order = [p.strip().lower() for p in settings.llm_fallback_chain.split(",") if p.strip()]
+
+    models: list[BaseChatModel] = []
+    seen: set[str] = set()
+    for provider in chain_order:
+        if provider in seen:
+            continue
+        try:
+            m = _instantiate_provider_model(provider, settings)
+            if m is not None:
+                models.append(m)
+                seen.add(provider)
+        except LLMProviderPackageError:
+            raise
+        except Exception as exc:
+            logger.warning("Failed to initialize LLM provider '%s': %s", provider, exc)
+
+    # If chain_order did not produce models, try generic fallback
+    if not models:
+        m = _instantiate_provider_model(settings.llm_provider, settings)
+        if m is not None:
+            models.append(m)
+
+    if not models:
+        raise LLMConfigurationError(
+            f"LLM_API_KEY is not configured for provider '{settings.llm_provider}' "
+            f"(model '{settings.llm_model}'). Set LLM_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, "
+            "or MISTRAL_API_KEY in root .env to enable natural-language SQL workflows."
+        )
+
+    primary = models[0]
+    if len(models) > 1:
+        logger.info(
+            "Multi-Provider Resilient Failover armed with %d providers: %s",
+            len(models),
+            list(seen),
+        )
+        return primary.with_fallbacks(models[1:])
+
+    return primary

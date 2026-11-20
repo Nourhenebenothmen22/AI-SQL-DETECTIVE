@@ -25,6 +25,11 @@ const DEFENSE_INVARIANTS = [
   { code: "RULE_03", label: "Anti-Chaining", desc: "Semicolon multi-statement injection denied" },
   { code: "RULE_04", label: "Catalog Isolation", desc: "pg_catalog & OS filesystem evasion blocked" },
   { code: "RULE_05", label: "Bounded Execution", desc: "Forced LIMIT 200 & 5000ms hard timeout" },
+  {
+    code: "RULE_06",
+    label: "Multi-Provider Failover",
+    desc: "Auto-cascade across OpenAI, Gemini, Mistral & OpenRouter",
+  },
 ] as const;
 
 export function DeterministicGuardHud({ health }: DeterministicGuardHudProps) {
@@ -32,6 +37,8 @@ export function DeterministicGuardHud({ health }: DeterministicGuardHudProps) {
 
   const dbConnected = health?.database_status === "connected";
   const llmActive = health?.llm_configured ?? false;
+  const armedCount = health?.llm_providers_armed?.length ?? (llmActive ? 1 : 0);
+  const isMultiProvider = (health?.llm_fallback_active ?? false) || armedCount > 1;
 
   return (
     <section
@@ -120,15 +127,23 @@ export function DeterministicGuardHud({ health }: DeterministicGuardHudProps) {
               <span className="truncate">AI_CORE</span>
             </div>
             <p className="mt-1 text-[11px] font-semibold text-text-primary truncate leading-none">
-              {llmActive ? "GPT-4o" : "OFFLINE"}
+              {isMultiProvider
+                ? `MULTI-AI (${armedCount})`
+                : llmActive
+                  ? "GPT-4o"
+                  : "OFFLINE"}
             </p>
             <span
               className={cn(
                 "mt-1 inline-block text-[8px] font-medium tracking-wider uppercase truncate leading-none",
-                llmActive ? "text-accent-primary" : "text-text-muted",
+                isMultiProvider
+                  ? "text-status-success font-semibold"
+                  : llmActive
+                    ? "text-accent-primary"
+                    : "text-text-muted",
               )}
             >
-              {llmActive ? "STREAMING" : "SQL ONLY"}
+              {isMultiProvider ? "FAILOVER ARMED" : llmActive ? "STREAMING" : "SQL ONLY"}
             </span>
           </div>
         </div>

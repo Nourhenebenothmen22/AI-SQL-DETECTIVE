@@ -700,3 +700,58 @@ async def test_runtime_query_classification_in_workflow(
     schema_stage = next(s for s in data["stages"] if s["stage"] == "schema_analyst")
     assert "Intent: Aggregation" in schema_stage["summary"]
     assert "Complexity: Moderate" in schema_stage["summary"]
+
+
+def test_multi_provider_settings_detection(test_settings: Settings):
+    """Verify detection of multiple LLM provider credentials and failover state."""
+    resilient_settings = Settings(
+        _env_file=None,
+        app_env="test",
+        database_ro_url=test_settings.database_ro_url,
+        database_app_url=test_settings.database_app_url,
+        openai_api_key="sk-test-openai",
+        google_api_key="AIzaSy-test-google",
+        mistral_api_key="mistral-test-key",
+        openrouter_api_key="sk-or-test-openrouter",
+        llm_fallback_chain="openai,google,mistral,openrouter",
+    )
+    providers = resilient_settings.configured_llm_providers
+    assert "openai" in providers
+    assert "google" in providers
+    assert "mistral" in providers
+    assert "openrouter" in providers
+    assert len(providers) == 4
+    assert resilient_settings.is_multi_provider_resilient is True
+    assert resilient_settings.is_llm_configured is True
+
+
+def test_build_chat_model_multi_provider_fallback(
+    test_settings: Settings, monkeypatch: pytest.MonkeyPatch
+):
+    """Verify build_chat_model wraps primary with fallbacks when multiple providers exist."""
+    resilient_settings = Settings(
+        _env_file=None,
+        app_env="test",
+        database_ro_url=test_settings.database_ro_url,
+        database_app_url=test_settings.database_app_url,
+        openai_api_key="sk-test-openai",
+        google_api_key="AIzaSy-test-google",
+        llm_fallback_chain="openai,google",
+    )
+
+    class _DummyModel:
+        def __init__(self, name: str) -> None:
+            self.name = name
+
+        def with_fallbacks(self, fallbacks: list[Any]) -> Any:
+            return {"primary": self.name, "fallbacks": [f.name for f in fallbacks]}
+
+    monkeypatch.setattr(
+        "app.modules.ai.llm.init_chat_model",
+        lambda model, model_provider, **_kw: _DummyModel(f"{model_provider}:{model}"),
+    )
+
+    model = build_chat_model(resilient_settings)
+    assert isinstance(model, dict)
+    assert model["primary"] == "openai:gpt-4o-mini"
+    assert model["fallbacks"] == ["google_genai:gemini-2.0-flash"]

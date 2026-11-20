@@ -37,4 +37,6 @@ def health_check(settings: Settings = Depends(get_app_settings)) -> HealthRespon
         database_status=db_status,
         llm_provider=settings.llm_provider,
         llm_configured=settings.is_llm_configured,
+        llm_providers_armed=settings.configured_llm_providers,
+        llm_fallback_active=settings.is_multi_provider_resilient,
     )

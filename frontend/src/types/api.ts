@@ -6,6 +6,8 @@ export interface HealthResponse {
   database_status: "connected" | "unavailable";
   llm_provider: string;
   llm_configured: boolean;
+  llm_providers_armed?: string[];
+  llm_fallback_active?: boolean;
 }
 
 export interface ConnectionSummary {

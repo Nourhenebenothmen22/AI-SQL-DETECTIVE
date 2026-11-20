@@ -59,13 +59,29 @@ class Settings(BaseSettings):
     sql_lock_timeout_ms: int = Field(default=1000, ge=100, le=10000)
     workflow_timeout_seconds: int = Field(default=60, ge=5, le=300)
 
-    # Provider-Agnostic LLM Configuration (LangChain)
+    # Multi-Provider Resilient Failover Chain (OpenAI, Google Gemini, Mistral, OpenRouter)
     llm_provider: str = Field(default="openai", min_length=1)
     llm_model: str = Field(default="gpt-4o-mini", min_length=1)
     llm_api_key: SecretStr | None = None
     llm_base_url: str | None = None
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     llm_timeout_seconds: int = Field(default=25, ge=5, le=120)
+
+    # Dedicated Provider Credentials
+    openai_api_key: SecretStr | None = None
+    openai_model: str = "gpt-4o-mini"
+
+    google_api_key: SecretStr | None = None
+    google_model: str = "gemini-2.0-flash"
+
+    mistral_api_key: SecretStr | None = None
+    mistral_model: str = "mistral-small-latest"
+
+    openrouter_api_key: SecretStr | None = None
+    openrouter_model: str = "deepseek/deepseek-chat"
+    openrouter_base_url: str = "https://openrouter.ai/api/v1"
+
+    llm_fallback_chain: str = "openai,google,mistral,openrouter"
 
     # Optional LangSmith Observability
     langsmith_tracing: bool = False
@@ -76,6 +92,11 @@ class Settings(BaseSettings):
     @field_validator(
         "llm_api_key",
         "llm_base_url",
+        "openai_api_key",
+        "google_api_key",
+        "mistral_api_key",
+        "openrouter_api_key",
+        "openrouter_base_url",
         "langsmith_api_key",
         "database_migrator_url",
         mode="before",
@@ -104,8 +125,54 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @property
+    def configured_llm_providers(self) -> list[str]:
+        providers: list[str] = []
+        # OpenAI
+        if (self.openai_api_key and self.openai_api_key.get_secret_value().strip()) or (
+            self.llm_provider == "openai"
+            and self.llm_api_key
+            and self.llm_api_key.get_secret_value().strip()
+            and not self.llm_base_url
+        ):
+            providers.append("openai")
+
+        # Google Gemini
+        if (self.google_api_key and self.google_api_key.get_secret_value().strip()) or (
+            self.llm_provider == "google_genai"
+            and self.llm_api_key
+            and self.llm_api_key.get_secret_value().strip()
+        ):
+            providers.append("google")
+
+        # Mistral AI
+        if (self.mistral_api_key and self.mistral_api_key.get_secret_value().strip()) or (
+            self.llm_provider in ("mistral", "mistralai")
+            and self.llm_api_key
+            and self.llm_api_key.get_secret_value().strip()
+        ):
+            providers.append("mistral")
+
+        # OpenRouter
+        if (self.openrouter_api_key and self.openrouter_api_key.get_secret_value().strip()) or (
+            bool(self.llm_base_url and "openrouter" in self.llm_base_url)
+            and self.llm_api_key
+            and self.llm_api_key.get_secret_value().strip()
+        ):
+            providers.append("openrouter")
+
+        # Fallback generic provider if not caught above
+        if not providers and self.llm_api_key and self.llm_api_key.get_secret_value().strip():
+            providers.append(self.llm_provider)
+
+        return providers
+
+    @property
     def is_llm_configured(self) -> bool:
-        return self.llm_api_key is not None and bool(self.llm_api_key.get_secret_value().strip())
+        return len(self.configured_llm_providers) > 0
+
+    @property
+    def is_multi_provider_resilient(self) -> bool:
+        return len(self.configured_llm_providers) > 1
 
     @property
     def effective_default_max_rows(self) -> int:

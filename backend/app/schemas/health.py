@@ -13,3 +13,5 @@ class HealthResponse(BaseModel):
     database_status: Literal["connected", "unavailable"]
     llm_provider: str
     llm_configured: bool
+    llm_providers_armed: list[str] = []
+    llm_fallback_active: bool = False
