@@ -13,8 +13,8 @@
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Next.js-15.5-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js 15" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-103_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 103 Passed" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-108_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 108 Passed" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-6_E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Security-100%25_Deterministic-10B981?style=flat-square&logo=shield&logoColor=white" alt="Deterministic Security" /></a>
 </p>
 
@@ -117,8 +117,8 @@ flowchart TD
 
 ### Description des 7 Nœuds du Graphe
 
-1.  **Schema Analyst :** Introspecte le catalogue PostgreSQL (`pg_catalog`) et sélectionne les tables, colonnes et clés de jointure pertinentes.
-2.  **SQL Generator :** Formule une requête `SELECT` PostgreSQL 16 dialecte strict en évitant les constructions non optimisées.
+1.  **Schema Analyst & Runtime Classifier :** Introspecte le catalogue PostgreSQL (`pg_catalog`), classifie dynamiquement l'intention métier (`aggregation`, `filtering`, `trend`, `cohort`, `anomaly`, `comparison`, `lookup`, `general`) et la complexité sémantique (`simple`, `moderate`, `complex`), formule la stratégie de génération optimale et sélectionne les tables, colonnes et clés de jointure pertinentes.
+2.  **SQL Generator :** Formule une requête `SELECT` PostgreSQL 16 dialecte strict guidée dynamiquement par l'intention et la stratégie formulées par l'agent précédent.
 3.  **Query Reviewer :** Valide la logique métier, la cohérence des jointures, les groupements `GROUP BY` et le traitement des valeurs `NULL`. Boucle de révision bornée à 2 tentatives max.
 4.  **Independent Security Gate (Non-LLM) :** Analyse l'AST via SQLGlot. Rejette toute tentative d'écriture, les injections, les fonctions système et force le plafond `LIMIT`.
 5.  **SQL Executor (Non-LLM) :** Exécute **uniquement** les requêtes certifiées par la Security Gate au sein d'une transaction `READ ONLY` avec timeout strict.
@@ -184,6 +184,7 @@ AI SQL Detective propose une interface DevTools haut de gamme (style Linear, Sup
 | **Optimization Panel** | Synthèse des métriques du plan `EXPLAIN (FORMAT JSON)` (coût total, nœud racine, scan séquentiel détecté) et propositions d'index B-Tree composites avec copie en un clic. |
 | **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques modernisés intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables (tooltips Obsidian Dark avec police JetBrains Mono). |
 | **Audit & History Log** | Consultation des exécutions passées paginées, filtrage par statut et bouton de rechargement direct dans le Workbench via le paramètre d'URL `?runId=`. |
+| **AI What-If Scenario Sandbox** | Simulateur de conditions de marché par IA (Black Friday, Churn VIP, Ruptures de stock) avec injection relationnelle atomique (PK/FK cohérentes) et réinitialisation instantanée au seed doré de baseline. |
 
 ---
 
@@ -203,6 +204,8 @@ Tous les endpoints sont fortement typés avec Pydantic v2 et documentés via Ope
 | `GET` | `/api/v1/history` | `?limit=&offset=&status=` | `QueryRunHistoryResponse` | Historique paginé des exécutions enregistrées dans `app_meta.query_runs`. |
 | `GET` | `/api/v1/history/{run_id}` | *-* | `QueryRunHistoryDetail` | Détail d'une exécution pour rechargement complet dans le Workbench. |
 | `GET` | `/api/v1/analytics` | `?connection_id=` | `AnalyticsDashboardResponse` | Agrégations télémétriques et statistiques de taille/lignes des tables PostgreSQL. |
+| `POST` | `/api/v1/scenarios/generate` | `ScenarioGenerateRequest` | `ScenarioGenerateResponse` | Simulation en langage naturel de scénarios synthétiques avec insertion atomique. |
+| `POST` | `/api/v1/scenarios/reset` | *-* | `ScenarioResetResponse` | Réinitialisation instantanée de la base au seed déterministe de référence. |
 
 ---
 
