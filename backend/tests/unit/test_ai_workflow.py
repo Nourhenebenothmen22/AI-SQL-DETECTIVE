@@ -617,3 +617,86 @@ async def test_workflow_timeout_and_cancellation_record_telemetry(
     with pytest.raises(asyncio.CancelledError):
         await task
     assert fake_history_repo.records[-1].execution_status == "cancelled"
+
+
+async def test_runtime_query_classification_in_workflow(
+    test_settings: Settings,
+    fake_history_repo: FakeQueryRunRepository,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_generator_prompts: list[str] = []
+
+    def _sql_generator_handler(msgs: list[Any]) -> SQLGenerationOutput:
+        for msg in msgs:
+            captured_generator_prompts.append(str(msg.content))
+        return SQLGenerationOutput(
+            sql="SELECT status, COUNT(*) AS count FROM ecommerce.orders GROUP BY status",
+            rationale="Aggregates orders by status.",
+            assumptions=["All statuses included."],
+        )
+
+    fake_llm = FakeStructuredLLM(
+        {
+            SchemaAnalysisOutput: lambda _m: SchemaAnalysisOutput(
+                selected_tables=["ecommerce.orders"],
+                relevant_columns=["ecommerce.orders.status"],
+                query_intent="aggregation",
+                query_complexity="moderate",
+                recommended_strategy="Group by status with COUNT(*)",
+            ),
+            SQLGenerationOutput: _sql_generator_handler,
+            QueryReviewOutput: lambda _m: QueryReviewOutput(
+                status="approved",
+                notes=["Approved aggregation."],
+            ),
+            ResultExplanationOutput: lambda _m: ResultExplanationOutput(
+                summary="Status breakdown completed.",
+                key_findings=["Delivered is top."],
+                caveats=[],
+                suggested_chart="bar",
+            ),
+            OptimizationSynthesisOutput: lambda _m: OptimizationSynthesisOutput(recommendations=[]),
+        }
+    )
+
+    monkeypatch.setattr("app.modules.ai.service.introspect_schema", lambda _spec: _sample_schema())
+    monkeypatch.setattr(
+        "app.modules.execution.executor.SQLExecutor.execute",
+        lambda *_a, **_kw: _sample_execution_success(),
+    )
+
+    app = create_app(settings=test_settings)
+    app.state.query_run_repository.dispose()
+    app.state.query_run_repository = fake_history_repo
+    app.state.workflow_service = DetectiveWorkflowService(
+        settings=test_settings,
+        security_gate=app.state.security_gate,
+        sql_executor=app.state.sql_executor,
+        history_repo=fake_history_repo,
+        llm_factory=lambda _s: fake_llm,  # type: ignore[arg-type, return-value]
+    )
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://testserver") as client:
+        resp = await client.post(
+            "/api/v1/queries/ask",
+            json={"question": "Order count per status"},
+        )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["classification"] is not None
+    assert data["classification"]["intent"] == "aggregation"
+    assert data["classification"]["complexity"] == "moderate"
+    assert "Group by status with COUNT(*)" in data["classification"]["recommended_strategy"]
+
+    # Verify SQL Generator received the AI classification in its context
+    combined_prompt = " ".join(captured_generator_prompts)
+    assert "Query intent: aggregation" in combined_prompt
+    assert "Query complexity: moderate" in combined_prompt
+    assert "Recommended generation strategy:" in combined_prompt
+
+    # Verify the Schema Analyst stage summary reflects the intent and complexity
+    schema_stage = next(s for s in data["stages"] if s["stage"] == "schema_analyst")
+    assert "Intent: Aggregation" in schema_stage["summary"]
+    assert "Complexity: Moderate" in schema_stage["summary"]

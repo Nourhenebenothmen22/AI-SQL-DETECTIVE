@@ -1,11 +1,12 @@
 "use client";
 
-import { BookOpen, Info, Lightbulb, Table2 } from "lucide-react";
+import { BookOpen, Compass, Info, Lightbulb, Sparkles, Table2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { ExplanationResponse } from "@/types/api";
+import type { ExplanationResponse, QueryClassificationResponse } from "@/types/api";
 
 interface AiExplanationPanelProps {
+  classification?: QueryClassificationResponse | null;
   explanation: ExplanationResponse | null;
   generationRationale: string | null;
   assumptions: string[];
@@ -14,7 +15,21 @@ interface AiExplanationPanelProps {
   warnings: string[];
 }
 
+function getComplexityVariant(complexity: QueryClassificationResponse["complexity"]) {
+  switch (complexity) {
+    case "simple":
+      return "success";
+    case "moderate":
+      return "cyan";
+    case "complex":
+      return "warning";
+    default:
+      return "default";
+  }
+}
+
 export function AiExplanationPanel({
+  classification,
   explanation,
   generationRationale,
   assumptions,
@@ -22,7 +37,7 @@ export function AiExplanationPanel({
   ambiguities,
   warnings,
 }: AiExplanationPanelProps) {
-  if (!explanation && !generationRationale && warnings.length === 0) {
+  if (!explanation && !generationRationale && !classification && warnings.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-border-subtle bg-card px-6 py-10 text-center">
         <BookOpen className="h-6 w-6 text-text-secondary/60" aria-hidden="true" />
@@ -39,6 +54,36 @@ export function AiExplanationPanel({
 
   return (
     <div className="space-y-4">
+      {classification ? (
+        <div className="rounded-lg border border-border-subtle bg-card p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-text-primary">
+              <Compass className="h-3.5 w-3.5 text-accent-primary" aria-hidden="true" />
+              <span>AI Query Classification &amp; Strategy</span>
+            </h3>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="indigo">
+                Intent: {classification.intent.toUpperCase()}
+              </Badge>
+              <Badge variant={getComplexityVariant(classification.complexity)}>
+                Complexity: {classification.complexity.toUpperCase()}
+              </Badge>
+            </div>
+          </div>
+          {classification.recommended_strategy ? (
+            <div className="mt-3 rounded-md border border-border-subtle/80 bg-surface/60 p-3">
+              <div className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-accent-secondary">
+                <Sparkles className="h-3 w-3" aria-hidden="true" />
+                <span>AI Recommended Generation Strategy</span>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-text-secondary">
+                {classification.recommended_strategy}
+              </p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       {explanation ? (
         <div className="rounded-lg border border-border-subtle bg-card p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">

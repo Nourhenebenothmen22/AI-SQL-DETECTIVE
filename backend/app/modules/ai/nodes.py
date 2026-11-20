@@ -167,7 +167,12 @@ class DetectiveNodes:
 
         duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
         tables_text = ", ".join(output.selected_tables[:5]) or "catalog analyzed"
-        summary = f"Selected {len(output.selected_tables)} table(s): {tables_text}"
+        intent_label = output.query_intent.capitalize()
+        complexity_label = output.query_complexity.capitalize()
+        summary = (
+            f"Selected {len(output.selected_tables)} table(s): {tables_text} · "
+            f"Intent: {intent_label} · Complexity: {complexity_label}"
+        )
         await _emit(
             config,
             "stage_completed",
@@ -188,6 +193,9 @@ class DetectiveNodes:
             "metric_definitions": output.metric_definitions,
             "ambiguities": output.ambiguities,
             "needs_clarification": output.needs_clarification,
+            "query_intent": output.query_intent,
+            "query_complexity": output.query_complexity,
+            "recommended_strategy": output.recommended_strategy,
             "stages": [
                 StageRecord(
                     stage=stage,
@@ -221,13 +229,21 @@ class DetectiveNodes:
 
         parts = [
             f"User question:\n{state['user_question']}",
-            f"Allowed schemas: {', '.join(state['allowed_schemas'])}",
-            f"Selected tables: {', '.join(state.get('selected_tables', []))}",
-            f"Relevant columns: {', '.join(state.get('relevant_columns', []))}",
-            f"Join paths: {'; '.join(state.get('join_paths', []))}",
-            f"Metric definitions: {'; '.join(state.get('metric_definitions', []))}",
-            f"Full introspected catalog:\n{state['schema_prompt']}",
+            f"Query intent: {state.get('query_intent', 'general')}",
+            f"Query complexity: {state.get('query_complexity', 'moderate')}",
         ]
+        if state.get("recommended_strategy"):
+            parts.append(f"Recommended generation strategy:\n{state['recommended_strategy']}")
+        parts.extend(
+            [
+                f"Allowed schemas: {', '.join(state['allowed_schemas'])}",
+                f"Selected tables: {', '.join(state.get('selected_tables', []))}",
+                f"Relevant columns: {', '.join(state.get('relevant_columns', []))}",
+                f"Join paths: {'; '.join(state.get('join_paths', []))}",
+                f"Metric definitions: {'; '.join(state.get('metric_definitions', []))}",
+                f"Full introspected catalog:\n{state['schema_prompt']}",
+            ]
+        )
         if state.get("revision_feedback"):
             parts.append(f"Query Reviewer revision feedback:\n{state['revision_feedback']}")
         if state.get("execution_error"):

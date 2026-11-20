@@ -30,6 +30,27 @@ class SchemaAnalysisOutput(BaseModel):
         default=False,
         description="True only if the request cannot be mapped without clarification.",
     )
+    query_intent: Literal[
+        "aggregation",
+        "filtering",
+        "trend",
+        "cohort",
+        "anomaly",
+        "comparison",
+        "lookup",
+        "general",
+    ] = Field(
+        default="general",
+        description="AI-classified semantic intent of the user request.",
+    )
+    query_complexity: Literal["simple", "moderate", "complex"] = Field(
+        default="moderate",
+        description="AI-evaluated semantic query complexity.",
+    )
+    recommended_strategy: str = Field(
+        default="",
+        description="AI-recommended SQL strategy tailored to this intent and complexity.",
+    )
 
 
 class SQLGenerationOutput(BaseModel):

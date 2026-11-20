@@ -110,10 +110,26 @@ class OptimizationRecommendationResponse(BaseModel):
     suggested_sql_or_index: str | None = None
 
 
+class QueryClassificationResponse(BaseModel):
+    intent: Literal[
+        "aggregation",
+        "filtering",
+        "trend",
+        "cohort",
+        "anomaly",
+        "comparison",
+        "lookup",
+        "general",
+    ] = "general"
+    complexity: Literal["simple", "moderate", "complex"] = "moderate"
+    recommended_strategy: str = ""
+
+
 class AskQueryResponse(BaseModel):
     run_id: UUID | None = None
     connection_id: str
     question: str
+    classification: QueryClassificationResponse | None = None
     selected_tables: list[str] = Field(default_factory=list)
     ambiguities: list[str] = Field(default_factory=list)
     candidate_sql: str | None = None

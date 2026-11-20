@@ -30,6 +30,7 @@ import type {
   OptimizationRecommendationResponse,
   PlanSummaryResponse,
   PrimaryStageId,
+  QueryClassificationResponse,
   SecurityCheckResponse,
 } from "@/types/api";
 
@@ -44,6 +45,7 @@ GROUP BY c.segment
 ORDER BY total_revenue DESC;`;
 
 interface WorkbenchResultState {
+  classification: QueryClassificationResponse | null;
   columns: string[];
   rows: Record<string, unknown>[];
   rowCount: number;
@@ -70,6 +72,7 @@ interface WorkbenchResultState {
 }
 
 const EMPTY_RESULT: WorkbenchResultState = {
+  classification: null,
   columns: [],
   rows: [],
   rowCount: 0,
@@ -103,9 +106,10 @@ export function WorkbenchView() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const runIdParam = searchParams.get("runId");
+  const qParam = searchParams.get("q");
   const { connectionId, health } = useConnection();
 
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(qParam ?? "");
   const [sql, setSql] = useState(DEFAULT_SQL);
   const [activeTab, setActiveTab] = useState("results");
   const [stages, setStages] = useState<StageProgressState[]>(resetSixStages);
@@ -125,6 +129,12 @@ export function WorkbenchView() {
     queryFn: ({ signal }) => apiClient.getHistoryDetail(runIdParam ?? "", signal),
     enabled: Boolean(runIdParam),
   });
+
+  useEffect(() => {
+    if (qParam) {
+      setQuestion(qParam);
+    }
+  }, [qParam]);
 
   useEffect(() => {
     const detail = historyDetailQuery.data;
@@ -262,6 +272,7 @@ export function WorkbenchView() {
       setSql(final.validated_sql ?? final.candidate_sql ?? "");
     }
     setResult({
+      classification: final.classification ?? null,
       columns: final.columns,
       rows: final.rows,
       rowCount: final.row_count,
@@ -499,6 +510,7 @@ export function WorkbenchView() {
 
             <TabsContent value="explanation">
               <AiExplanationPanel
+                classification={result.classification}
                 explanation={result.explanation}
                 generationRationale={result.generationRationale}
                 assumptions={result.assumptions}

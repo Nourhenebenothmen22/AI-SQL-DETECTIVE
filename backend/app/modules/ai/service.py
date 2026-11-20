@@ -26,6 +26,7 @@ from app.schemas.queries import (
     OptimizationRecommendationResponse,
     PlanFindingResponse,
     PlanSummaryResponse,
+    QueryClassificationResponse,
     SecurityCheckResponse,
     StageStatusResponse,
 )
@@ -229,10 +230,19 @@ class DetectiveWorkflowService:
             for c in final_state.get("security_checks", [])
         ]
 
+        classification_resp: QueryClassificationResponse | None = None
+        if final_state.get("query_intent"):
+            classification_resp = QueryClassificationResponse(
+                intent=final_state.get("query_intent", "general"),
+                complexity=final_state.get("query_complexity", "moderate"),
+                recommended_strategy=final_state.get("recommended_strategy", ""),
+            )
+
         return AskQueryResponse(
             run_id=run_id,
             connection_id=spec.id,
             question=question.strip(),
+            classification=classification_resp,
             selected_tables=final_state.get("selected_tables", []),
             ambiguities=final_state.get("ambiguities", []),
             candidate_sql=final_state.get("candidate_sql"),

@@ -29,13 +29,25 @@ class DetectiveState(TypedDict, total=False):
     schema_prompt: str
     allowed_schemas: list[str]
 
-    # Agent 1: Schema Analyst
+    # Agent 1: Schema Analyst & Runtime Query Classifier
     selected_tables: list[str]
     relevant_columns: list[str]
     join_paths: list[str]
     metric_definitions: list[str]
     ambiguities: list[str]
     needs_clarification: bool
+    query_intent: Literal[
+        "aggregation",
+        "filtering",
+        "trend",
+        "cohort",
+        "anomaly",
+        "comparison",
+        "lookup",
+        "general",
+    ]
+    query_complexity: Literal["simple", "moderate", "complex"]
+    recommended_strategy: str
 
     # Agent 2: SQL Generator
     candidate_sql: str
