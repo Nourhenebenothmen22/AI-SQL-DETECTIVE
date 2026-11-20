@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.core.config import Settings
 from app.main import create_app
 from app.modules.evals.golden_dataset import GOLDEN_BENCHMARK_CASES
 
@@ -16,9 +17,9 @@ def test_golden_dataset_structure():
         assert "ecommerce." in case.golden_sql
 
 
-def test_evals_api_endpoints():
+def test_evals_api_endpoints(test_settings: Settings):
     """Test REST API endpoints for EvalOps benchmark suite."""
-    app = create_app()
+    app = create_app(settings=test_settings)
     with TestClient(app) as client:
         # 1. GET /api/v1/evals/cases
         cases_resp = client.get("/api/v1/evals/cases")
