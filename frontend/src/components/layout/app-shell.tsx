@@ -7,6 +7,7 @@ import {
   Lock,
   Menu,
   ShieldCheck,
+  Sparkles,
   TerminalSquare,
   X,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Workbench", icon: TerminalSquare },
   { href: "/analytics", label: "Analytics", icon: Activity },
   { href: "/evals", label: "EvalOps", icon: FlaskConical },
+  { href: "/sandbox", label: "Sandbox", icon: Sparkles },
   { href: "/history", label: "History", icon: History },
 ] as const;
 

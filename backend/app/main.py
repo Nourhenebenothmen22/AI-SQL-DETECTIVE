@@ -12,6 +12,7 @@ from app.modules.connections.registry import ConnectionRegistry
 from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
+from app.modules.scenarios.service import ScenarioGeneratorService
 from app.modules.security.gate import SecurityGate
 
 
@@ -58,6 +59,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         executor=app.state.sql_executor,
         connections=app.state.connection_registry,
         workflow_service=app.state.workflow_service,
+    )
+    app.state.scenario_service = ScenarioGeneratorService(
+        settings=resolved_settings,
     )
 
     app.add_middleware(
