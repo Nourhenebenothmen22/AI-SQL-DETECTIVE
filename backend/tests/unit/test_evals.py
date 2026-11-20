@@ -25,11 +25,11 @@ def test_evals_api_endpoints(test_settings: Settings, monkeypatch: pytest.Monkey
         "app.modules.execution.executor.SQLExecutor.execute",
         lambda *_a, **_kw: ExecutionResult(
             status="success",
+            columns=("metric",),
             rows=[{"metric": 42}],
-            columns=["metric"],
             row_count=1,
-            duration_ms=4.2,
-            truncated=False,
+            was_truncated=False,
+            execution_time_ms=4.2,
         ),
     )
     app = create_app(settings=test_settings)
