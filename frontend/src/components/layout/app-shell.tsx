@@ -4,9 +4,7 @@ import {
   Activity,
   FlaskConical,
   History,
-  Lock,
   Menu,
-  ShieldCheck,
   Sparkles,
   TerminalSquare,
   X,
@@ -16,8 +14,8 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 
 import { ConnectionSelector } from "@/components/layout/connection-selector";
+import { DeterministicGuardHud } from "@/components/layout/deterministic-guard-hud";
 import { useConnection } from "@/components/providers/connection-provider";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -89,24 +87,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
       </nav>
 
       <div className="border-t border-border-subtle p-3">
-        <div className="rounded-lg border border-border-subtle bg-card p-3 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-medium text-status-success">
-            <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
-            <span>Deterministic Guard</span>
-          </div>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-text-secondary">
-            Every query passes the SQLGlot AST gate and runs under a dedicated read-only PostgreSQL
-            role with enforced row limits and timeouts.
-          </p>
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <Badge variant={health?.llm_configured ? "indigo" : "warning"}>
-              <Lock className="h-3 w-3" aria-hidden="true" />
-              {health?.llm_configured
-                ? `LLM: ${health.llm_provider}`
-                : "LLM key unset (SQL mode active)"}
-            </Badge>
-          </div>
-        </div>
+        <DeterministicGuardHud health={health} />
       </div>
     </div>
   );
