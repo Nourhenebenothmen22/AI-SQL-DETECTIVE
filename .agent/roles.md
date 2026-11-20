@@ -271,12 +271,12 @@ AI SQL Detective executes natural-language and SQL assistance requests through a
 
 ### 4.1 Agent & Node Definitions
 
-1. **Schema Analyst** *(LLM + Deterministic Introspection Context)*
-   - **Responsibilities:** Receives the user's natural-language question and introspected PostgreSQL metadata; identifies relevant tables, columns, joins, filter keys, and potential ambiguities; produces a compact, grounded schema context for downstream SQL generation.
-   - **Outputs:** Selected tables/columns, join paths, metric definitions, and clarification flags if the request is ambiguous.
+1. **Schema Analyst & Runtime Query Classifier** *(LLM + Deterministic Introspection Context)*
+   - **Responsibilities:** Receives the user's natural-language question and introspected PostgreSQL metadata. Operates as an intelligent semantic analyzer that dynamically classifies query intent (`aggregation`, `filtering`, `trend`, `cohort`, `anomaly`, `comparison`, `lookup`, `general`), estimates semantic complexity (`simple`, `moderate`, `complex`), formulates an AI-guided generation strategy, and grounds relevant tables, columns, joins, filter keys, and potential ambiguities without any hardcoded routing rules.
+   - **Outputs:** Selected tables/columns, join paths, metric definitions, query intent classification, estimated complexity, recommended generation strategy, and clarification flags if the request is ambiguous.
 
 2. **SQL Generator** *(LLM)*
-   - **Responsibilities:** Translates the natural-language question and Schema Analyst context into a single, clean, PostgreSQL 16-compatible read-only `SELECT` query (with explicit column lists where appropriate and dialect-accurate syntax).
+   - **Responsibilities:** Translates the natural-language question, grounded schema context, and AI-classified intent/strategy into a single, clean, PostgreSQL 16-compatible read-only `SELECT` query (with explicit column lists where appropriate, dialect-accurate syntax, and optimal structure tailored to the classified intent and complexity).
    - **Outputs:** Candidate SQL query, generation rationale, and assumptions made.
 
 3. **Query Reviewer** *(LLM)*
@@ -494,3 +494,23 @@ Before implementing **any** application features, installing dependencies, or pr
 6. **Request explicit approval:** Wait for direct user approval before proceeding.
 
 **Hard Constraint:** Do **not** install dependencies, create database infrastructure, scaffold application code, or implement features before receiving explicit approval.
+
+---
+
+## 9. Execution Policy: Plan-First (Strict)
+
+- **NEVER** execute commands, modify files, or write code immediately after a user request.
+- **ALWAYS** start by presenting a concise, step-by-step **Execution Plan** detailing:
+  1. The files to be created, modified, or deleted.
+  2. The commands or actions to be run.
+  3. The expected outcome or potential side effects.
+- **WAIT for explicit user approval** (e.g., "OK", "Go", "Proceed") before performing any action.
+- If a request is ambiguous, ask clarifying questions inside the plan before proceeding.
+
+---
+
+## 10. Architecture Policy: 100% AI-Driven & Zero Hardcoding (Strict)
+
+- **Single Source of Truth:** `roles.md` is the absolute authority. Every decision, refactor, and feature MUST strictly comply with it.
+- **100% LLM-Driven Logic:** NEVER use hardcoded keywords, static regex rules, fixed dictionaries, or manual `if/else` decision trees for intent, routing, classification, or content generation. Always delegate reasoning and dynamic logic to the LLM (via structured outputs / prompts).
+- **Mandatory Codebase Audit:** Before implementing any change, audit the relevant files in the codebase to detect and flag any existing hardcoded logic, magic strings, or static fallbacks, and propose replacing them with LLM-driven mechanisms in your Execution Plan.
