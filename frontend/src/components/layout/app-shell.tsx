@@ -86,7 +86,7 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
         })}
       </nav>
 
-      <div className="border-t border-border-subtle p-3">
+      <div className="border-t border-border-subtle p-3 pb-8">
         <DeterministicGuardHud health={health} />
       </div>
     </div>
