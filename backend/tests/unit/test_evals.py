@@ -1,8 +1,10 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings
 from app.main import create_app
 from app.modules.evals.golden_dataset import GOLDEN_BENCHMARK_CASES
+from app.modules.execution.executor import ExecutionResult
 
 
 def test_golden_dataset_structure():
@@ -17,8 +19,19 @@ def test_golden_dataset_structure():
         assert "ecommerce." in case.golden_sql
 
 
-def test_evals_api_endpoints(test_settings: Settings):
+def test_evals_api_endpoints(test_settings: Settings, monkeypatch: pytest.MonkeyPatch):
     """Test REST API endpoints for EvalOps benchmark suite."""
+    monkeypatch.setattr(
+        "app.modules.execution.executor.SQLExecutor.execute",
+        lambda *_a, **_kw: ExecutionResult(
+            status="success",
+            rows=[{"metric": 42}],
+            columns=["metric"],
+            row_count=1,
+            duration_ms=4.2,
+            truncated=False,
+        ),
+    )
     app = create_app(settings=test_settings)
     with TestClient(app) as client:
         # 1. GET /api/v1/evals/cases
