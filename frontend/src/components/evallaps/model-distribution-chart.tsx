@@ -63,7 +63,8 @@ export function ModelDistributionChart({ models }: ModelDistributionChartProps) 
   const chartData = models
     .filter((m) => m.total_tokens > 0)
     .map((m) => ({
-      name: m.model_name,
+      name: `${m.model_name} (${m.provider_name})`,
+      key: `${m.provider_name}-${m.model_name}`,
       model_name: m.model_name,
       provider_name: m.provider_name,
       total_tokens: m.total_tokens,
@@ -110,8 +111,8 @@ export function ModelDistributionChart({ models }: ModelDistributionChartProps) 
                 stroke="#0D121F"
                 strokeWidth={2}
               >
-                {chartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={PALETTE[index % PALETTE.length]} />
+                {chartData.map((entry, index) => (
+                  <Cell key={entry.key} fill={PALETTE[index % PALETTE.length]} />
                 ))}
               </Pie>
             </PieChart>
@@ -123,14 +124,19 @@ export function ModelDistributionChart({ models }: ModelDistributionChartProps) 
       <div className="mt-2 flex flex-wrap items-center justify-center gap-2 border-t border-border-subtle/50 pt-3">
         {chartData.slice(0, 4).map((entry, index) => (
           <div
-            key={entry.model_name}
+            key={entry.key}
             className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-surface/80 px-2.5 py-1 text-[11px] font-mono tabular-nums"
           >
             <span
-              className="h-2 w-2 rounded-full"
+              className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: PALETTE[index % PALETTE.length] }}
             />
-            <span className="max-w-[120px] truncate text-slate-200">{entry.model_name}</span>
+            <span
+              className="max-w-[130px] truncate text-slate-200"
+              title={`${entry.model_name} (${entry.provider_name})`}
+            >
+              {entry.model_name} <span className="text-[10px] text-slate-400">({entry.provider_name})</span>
+            </span>
             <span className="font-semibold text-sky-400">{entry.percentage.toFixed(0)}%</span>
           </div>
         ))}
