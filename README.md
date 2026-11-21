@@ -1,6 +1,10 @@
 # 🕵️‍♂️ AI SQL Detective
 
 <p align="center">
+  <img src="frontend/public/logo.svg" width="380" alt="AI SQL Detective Logo" />
+</p>
+
+<p align="center">
   <strong>L'assistant d'investigation PostgreSQL IA de nouvelle génération, sécurisé par AST déterministe, orchestré par LangGraph et propulsé par une architecture 100% Free-Tier résiliente avec observabilité FinOps (EvalLaps).</strong>
 </p>
 
@@ -13,8 +17,8 @@
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Next.js-15.5-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js 15" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-130_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 130 Passed" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-6_E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-135_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 135 Passed" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/LLM-100%25_Free--Tier-06B6D4?style=flat-square&logo=lightning&logoColor=white" alt="100% Free-Tier" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/EvalLaps-LLMOps_%26_FinOps-6366F1?style=flat-square&logo=speedtest&logoColor=white" alt="EvalLaps LLMOps & FinOps" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Security-100%25_Deterministic-10B981?style=flat-square&logo=shield&logoColor=white" alt="Deterministic Security" /></a>
@@ -24,18 +28,72 @@
 
 ## 📑 Sommaire
 
-1. [Le Problème Résolu & La Vision](#-le-problème-résolu--la-vision)
-2. [Les Enjeux & L'Impact Métier](#-les-enjeux--limpact-métier)
-3. [Les Acteurs & Personas Ciblés](#-les-acteurs--personas-ciblés)
-4. [Architecture & Workflow Multi-Agents (LangGraph)](#-architecture--workflow-multi-agents-langgraph)
-5. [Architecture LLM 100% Free-Tier & Résilience Multi-Fournisseurs](#-architecture-llm-100-free-tier--résilience-multi-fournisseurs)
-6. [Sécurité en Profondeur (Defense-in-Depth)](#-sécurité-en-profondeur-defense-in-depth)
-7. [Module EvalLaps (LLMOps & FinOps Observability)](#-module-evallaps-llmops--finops-observability)
-8. [Catalogue des Fonctionnalités Clés](#-catalogue-des-fonctionnalités-clés)
-9. [Spécification des Endpoints de l'API REST (`/api/v1`)](#-spécification-des-endpoints-de-lapi-rest-apiv1)
-10. [Guide de Démarrage & Déploiement Pas-à-Pas](#-guide-de-démarrage--déploiement-pas-à-pas)
-11. [Qualité, Tests & Intégration Continue (CI/CD)](#-qualité-tests--intégration-continue-cicd)
-12. [Stack Technique Complète](#-stack-technique-complète)
+1. [Captures d'Écran & Démonstration Visuelle](#-captures-décran--démonstration-visuelle)
+2. [Le Problème Résolu & La Vision](#-le-problème-résolu--la-vision)
+3. [Les Enjeux & L'Impact Métier](#-les-enjeux--limpact-métier)
+4. [Les Acteurs & Personas Ciblés](#-les-acteurs--personas-ciblés)
+5. [Architecture & Workflow Multi-Agents (LangGraph)](#-architecture--workflow-multi-agents-langgraph)
+6. [Architecture LLM 100% Free-Tier & Résilience Multi-Fournisseurs](#-architecture-llm-100-free-tier--résilience-multi-fournisseurs)
+7. [Sécurité en Profondeur (Defense-in-Depth)](#-sécurité-en-profondeur-defense-in-depth)
+8. [Module EvalLaps (LLMOps & FinOps Observability)](#-module-evallaps-llmops--finops-observability)
+9. [Catalogue des Fonctionnalités Clés](#-catalogue-des-fonctionnalités-clés)
+10. [Spécification des Endpoints de l'API REST (`/api/v1`)](#-spécification-des-endpoints-de-lapi-rest-apiv1)
+11. [Guide de Démarrage & Déploiement Pas-à-Pas](#-guide-de-démarrage--déploiement-pas-à-pas)
+12. [Qualité, Tests & Intégration Continue (CI/CD)](#-qualité-tests--intégration-continue-cicd)
+13. [Stack Technique Complète](#-stack-technique-complète)
+
+---
+
+## 📸 Captures d'Écran & Démonstration Visuelle
+
+Découvrez l'interface moderne Obsidian Dark d'AI SQL Detective à travers ses différents modules :
+
+### 1. 🔍 Workbench & Explorateur de Schéma PostgreSQL
+> Vue d'ensemble de la console d'investigation avec l'arborescence complète des 9 tables relationnelles (`ecommerce.orders`, `customers`, `products`, `order_items`, `inventory`, `payments`, `reviews`, `categories`, `addresses`), le décompte en temps réel des lignes, le statut de connexion L4 et la barre de prompt naturelle.
+
+![Workbench Overview](docs/screenshots/01_workbench_overview.png)
+
+---
+
+### 2. ⚡ Éditeur SQL Monaco & Inspection Détaillée des Tables
+> Zoom sur la décomposition d'une table avec ses index B-Tree, types de données stricts et éditeur Monaco synchronisé avec la passerelle déterministe AST SQLGlot.
+
+![Workbench Schema and Editor](docs/screenshots/02_workbench_schema_and_editor.png)
+
+---
+
+### 3. ⏱️ EvalLaps — Observabilité LLMOps, Quotas & Burn Rate
+> Tableau de bord exécutif inspiré de Google AI Studio : métriques de consommation quotidienne et mensuelle, tokens restants, compte à rebours de réinitialisation automatique UTC 00:00:00, et vélocité de consommation (Burn Rate).
+
+![EvalLaps FinOps Overview](docs/screenshots/04_evallaps_finops_overview.png)
+
+---
+
+### 4. 🔀 EvalLaps — Télémétrie I/O, Load Balancer & Agents Cognitifs
+> Ventilation Input/Output (Prompts vs Complétions), surveillance de charge des clés et consommation par étape de pipeline d'agents (Analyste, Générateur, Réviseur, Optimiseur, Explicateur).
+
+![EvalLaps Telemetry and Stages](docs/screenshots/05_evallaps_telemetry_and_stages.png)
+
+---
+
+### 5. 📊 Analytics — Tendances d'Exécution & Métriques de Latence
+> Visualisation Recharts des temps de réponse (latence moyenne et pic en ms), répartition des statuts de requêtes (Passed, Optimized, Security Blocked) et historique d'activité.
+
+![Analytics Dashboard](docs/screenshots/03_analytics_dashboard.png)
+
+---
+
+### 6. 🧪 EvalOps — Banc d'Évaluation & Golden Benchmarks
+> Évaluation automatisée sur jeu de données de référence avec scoring de fidélité sémantique, exactitude syntaxique et télémétrie des modèles.
+
+![EvalOps Benchmarks](docs/screenshots/06_evalops_benchmarks.png)
+
+---
+
+### 7. 📜 History — Grand Livre d'Audit des Requêtes
+> Audit trail complet traquant chaque requête exécutée, son temps de traitement, le nombre de lignes retournées et la validation de sécurité déterministe.
+
+![History Ledger](docs/screenshots/07_history_ledger.png)
 
 ---
 

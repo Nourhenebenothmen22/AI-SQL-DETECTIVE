@@ -18,36 +18,36 @@ export function LogoIcon({ className, size = 32 }: LogoIconProps) {
     >
       <defs>
         <linearGradient id="logo-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#0F172A" />
-          <stop offset="50%" stop-color="#090E17" />
-          <stop offset="100%" stop-color="#030712" />
+          <stop offset="0%" stopColor="#0F172A" />
+          <stop offset="50%" stopColor="#090E17" />
+          <stop offset="100%" stopColor="#030712" />
         </linearGradient>
 
         <linearGradient id="logo-border-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8" />
-          <stop offset="50%" stop-color="#6366F1" stop-opacity="0.3" />
-          <stop offset="100%" stop-color="#34D399" stop-opacity="0.6" />
+          <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
+          <stop offset="50%" stopColor="#6366F1" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#34D399" stopOpacity="0.6" />
         </linearGradient>
 
         <linearGradient id="logo-cyan-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#38BDF8" />
-          <stop offset="100%" stop-color="#0284C7" />
+          <stop offset="0%" stopColor="#38BDF8" />
+          <stop offset="100%" stopColor="#0284C7" />
         </linearGradient>
 
         <linearGradient id="logo-emerald-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#34D399" />
-          <stop offset="100%" stop-color="#059669" />
+          <stop offset="0%" stopColor="#34D399" />
+          <stop offset="100%" stopColor="#059669" />
         </linearGradient>
 
         <linearGradient id="logo-violet-glow" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#A78BFA" />
-          <stop offset="100%" stop-color="#6366F1" />
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="100%" stopColor="#6366F1" />
         </linearGradient>
 
         <radialGradient id="logo-ai-core-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8" />
-          <stop offset="60%" stop-color="#0284C7" stop-opacity="0.2" />
-          <stop offset="100%" stop-color="#0284C7" stop-opacity="0" />
+          <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.8" />
+          <stop offset="60%" stopColor="#0284C7" stopOpacity="0.2" />
+          <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
         </radialGradient>
       </defs>
 
