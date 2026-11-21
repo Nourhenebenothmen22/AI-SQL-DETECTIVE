@@ -18,6 +18,22 @@ class StageRecord(TypedDict):
     summary: str
 
 
+class TokenLedgerRecord(TypedDict):
+    """Auditable FinOps & LLMOps token ledger telemetry for one agent stage."""
+
+    stage_id: str
+    provider_name: str
+    model_name: str
+    key_fingerprint: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    estimated_savings_usd: float
+    real_cost_usd: float
+    http_status: int
+    latency_ms: float
+
+
 class DetectiveState(TypedDict, total=False):
     """Typed LangGraph shared state across all 7 AI SQL Detective agents."""
 
@@ -95,3 +111,4 @@ class DetectiveState(TypedDict, total=False):
     # Parallel-safe append-only logs
     warnings: Annotated[list[str], operator.add]
     stages: Annotated[list[StageRecord], operator.add]
+    token_ledger_entries: Annotated[list[TokenLedgerRecord], operator.add]

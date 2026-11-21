@@ -9,6 +9,7 @@ from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging
 from app.modules.ai.service import DetectiveWorkflowService
 from app.modules.connections.registry import ConnectionRegistry
+from app.modules.evallaps import EvalLapsRepository, EvalLapsService
 from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
@@ -22,6 +23,9 @@ async def _lifespan(app: FastAPI) -> AsyncIterator[None]:
     repo: QueryRunRepository | None = getattr(app.state, "query_run_repository", None)
     if repo is not None:
         repo.dispose()
+    token_repo: EvalLapsRepository | None = getattr(app.state, "token_ledger_repository", None)
+    if token_repo is not None:
+        token_repo.dispose()
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -47,11 +51,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.security_gate = SecurityGate()
     app.state.sql_executor = SQLExecutor()
     app.state.query_run_repository = QueryRunRepository(resolved_settings)
+    app.state.token_ledger_repository = EvalLapsRepository(resolved_settings)
+    app.state.evallaps_service = EvalLapsService(
+        repository=app.state.token_ledger_repository,
+        settings=resolved_settings,
+    )
     app.state.workflow_service = DetectiveWorkflowService(
         settings=resolved_settings,
         security_gate=app.state.security_gate,
         sql_executor=app.state.sql_executor,
         history_repo=app.state.query_run_repository,
+        token_ledger_repo=app.state.token_ledger_repository,
     )
     app.state.eval_service = EvalOpsService(
         settings=resolved_settings,

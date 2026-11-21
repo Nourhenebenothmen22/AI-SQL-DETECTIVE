@@ -158,3 +158,5 @@ class AskQueryResponse(BaseModel):
     optimizations: list[OptimizationRecommendationResponse] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     stages: list[StageStatusResponse] = Field(default_factory=list)
+    total_tokens: int = 0
+    estimated_savings_usd: float = 0.0

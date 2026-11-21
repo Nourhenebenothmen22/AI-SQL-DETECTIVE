@@ -7,8 +7,10 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     Float,
+    ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     func,
@@ -59,5 +61,40 @@ class QueryRun(Base):
     optimizations_json: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB, nullable=True)
     langsmith_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
+class LLMTokenLedger(Base):
+    """Auditable FinOps & LLMOps token ledger recording per-stage consumption and savings."""
+
+    __tablename__ = "llm_token_ledger"
+    __table_args__ = (
+        Index("ix_llm_token_ledger_recorded_at", "recorded_at"),
+        Index("ix_llm_token_ledger_provider_recorded", "provider_name", "recorded_at"),
+        Index("ix_llm_token_ledger_run_id", "run_id"),
+        {"schema": APP_META_SCHEMA},
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    run_id: Mapped[UUID | None] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey(f"{APP_META_SCHEMA}.query_runs.id", ondelete="CASCADE"),
+        nullable=True,
+    )
+    stage_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider_name: Mapped[str] = mapped_column(String(32), nullable=False)
+    model_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    key_fingerprint: Mapped[str] = mapped_column(String(16), nullable=False)
+    prompt_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    completion_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_tokens: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    estimated_savings_usd: Mapped[float] = mapped_column(
+        Numeric(10, 6), nullable=False, default=0.0
+    )
+    real_cost_usd: Mapped[float] = mapped_column(Numeric(10, 6), nullable=False, default=0.0)
+    http_status: Mapped[int] = mapped_column(Integer, nullable=False, default=200)
+    latency_ms: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    recorded_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

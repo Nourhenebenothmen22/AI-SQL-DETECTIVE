@@ -32,8 +32,10 @@ from app.modules.ai.state import (
     MAX_REVIEW_REVISIONS,
     DetectiveState,
     StageRecord,
+    TokenLedgerRecord,
 )
 from app.modules.connections.registry import DatabaseConnectionSpec
+from app.modules.evallaps.types import calculate_savings_usd
 from app.modules.execution.executor import SQLExecutor
 from app.modules.execution.plan_parser import PlanSummary
 from app.modules.security.gate import SecurityGate
@@ -80,16 +82,109 @@ async def _invoke_structured(
     user_prompt: str,
     *,
     timeout_seconds: float,
-) -> TModel:
-    runnable = llm.with_structured_output(output_schema)
+    stage_id: str = "unknown",
+) -> tuple[TModel, TokenLedgerRecord]:
+    call_start = time.perf_counter()
+    raw_mode = True
+    try:
+        runnable = llm.with_structured_output(output_schema, include_raw=True)
+    except TypeError:
+        runnable = llm.with_structured_output(output_schema)
+        raw_mode = False
+
     messages = [
         SystemMessage(content=system_prompt),
         HumanMessage(content=user_prompt),
     ]
     result = await asyncio.wait_for(runnable.ainvoke(messages), timeout=timeout_seconds)
-    if isinstance(result, output_schema):
-        return result
-    return output_schema.model_validate(result)
+    duration_ms = round((time.perf_counter() - call_start) * 1000.0, 2)
+
+    raw_msg: Any = None
+    if raw_mode and isinstance(result, dict) and "parsed" in result:
+        output = result["parsed"]
+        raw_msg = result.get("raw")
+        if output is None:
+            if isinstance(raw_msg, output_schema):
+                output = raw_msg
+            else:
+                err = result.get("parsing_error")
+                if err is not None:
+                    logger.warning(
+                        "Structured output parsing fallback on stage %s: %s", stage_id, err
+                    )
+                output = output_schema.model_validate(err or result)
+    elif isinstance(result, output_schema):
+        output = result
+    else:
+        output = output_schema.model_validate(result)
+
+    # Extract token usage & model telemetry
+    prompt_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    model_name = "unknown"
+
+    if raw_msg is not None:
+        usage = getattr(raw_msg, "usage_metadata", None)
+        if isinstance(usage, dict):
+            prompt_tokens = int(usage.get("input_tokens") or 0)
+            completion_tokens = int(usage.get("output_tokens") or 0)
+            total_tokens = int(usage.get("total_tokens") or (prompt_tokens + completion_tokens))
+
+        resp_meta = getattr(raw_msg, "response_metadata", None)
+        if isinstance(resp_meta, dict):
+            if not prompt_tokens and "token_usage" in resp_meta:
+                tu = resp_meta["token_usage"]
+                prompt_tokens = int(tu.get("prompt_tokens") or 0)
+                completion_tokens = int(tu.get("completion_tokens") or 0)
+                total_tokens = int(tu.get("total_tokens") or (prompt_tokens + completion_tokens))
+            if "model_name" in resp_meta:
+                model_name = str(resp_meta["model_name"])
+            elif "model" in resp_meta:
+                model_name = str(resp_meta["model"])
+
+    if model_name == "unknown":
+        model_name = (
+            getattr(llm, "model_name", None)
+            or getattr(llm, "model", None)
+            or getattr(getattr(llm, "runnable", None), "model_name", None)
+            or getattr(getattr(llm, "runnable", None), "model", None)
+            or "default-model"
+        )
+
+    provider_name = (
+        getattr(llm, "_provider_name", None)
+        or getattr(getattr(llm, "runnable", None), "_provider_name", None)
+        or "groq"
+    )
+    key_fingerprint = (
+        getattr(llm, "_key_fingerprint", None)
+        or getattr(getattr(llm, "runnable", None), "_key_fingerprint", None)
+        or "free"
+    )
+
+    if total_tokens == 0:
+        prompt_tokens = max(1, (len(system_prompt) + len(user_prompt)) // 4)
+        completion_tokens = max(1, len(str(output)) // 4)
+        total_tokens = prompt_tokens + completion_tokens
+
+    savings = calculate_savings_usd(prompt_tokens, completion_tokens)
+
+    ledger_record: TokenLedgerRecord = {
+        "stage_id": stage_id,
+        "provider_name": provider_name,
+        "model_name": model_name,
+        "key_fingerprint": key_fingerprint,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "estimated_savings_usd": savings,
+        "real_cost_usd": 0.0,
+        "http_status": 200,
+        "latency_ms": duration_ms,
+    }
+
+    return output, ledger_record
 
 
 def _deterministic_findings_as_recommendations(
@@ -167,12 +262,13 @@ class DetectiveNodes:
             f"User question:\n{state['user_question']}\n\n"
             f"Introspected PostgreSQL catalog:\n{state['schema_prompt']}"
         )
-        output = await _invoke_structured(
+        output, ledger_record = await _invoke_structured(
             self._get_active_llm(),
             SchemaAnalysisOutput,
             SCHEMA_ANALYST_SYSTEM_PROMPT,
             prompt,
             timeout_seconds=self._llm_timeout_seconds,
+            stage_id=stage,
         )
 
         duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
@@ -193,6 +289,8 @@ class DetectiveNodes:
                 "attempt": 1,
                 "duration_ms": duration_ms,
                 "summary": summary,
+                "tokens": ledger_record["total_tokens"],
+                "savings_usd": ledger_record["estimated_savings_usd"],
             },
         )
 
@@ -215,6 +313,7 @@ class DetectiveNodes:
                     summary=summary,
                 )
             ],
+            "token_ledger_entries": [ledger_record],
         }
 
     async def sql_generator(
@@ -262,12 +361,13 @@ class DetectiveNodes:
                 f"Previous SQL:\n{state.get('candidate_sql', '')}"
             )
 
-        output = await _invoke_structured(
+        output, ledger_record = await _invoke_structured(
             self._get_active_llm(),
             SQLGenerationOutput,
             SQL_GENERATOR_SYSTEM_PROMPT,
             "\n\n".join(parts),
             timeout_seconds=self._llm_timeout_seconds,
+            stage_id=stage,
         )
 
         duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
@@ -286,6 +386,8 @@ class DetectiveNodes:
                 "attempt": attempt,
                 "duration_ms": duration_ms,
                 "summary": summary,
+                "tokens": ledger_record["total_tokens"],
+                "savings_usd": ledger_record["estimated_savings_usd"],
             },
         )
 
@@ -304,6 +406,7 @@ class DetectiveNodes:
                     summary=summary,
                 )
             ],
+            "token_ledger_entries": [ledger_record],
         }
 
     async def query_reviewer(
@@ -332,12 +435,13 @@ class DetectiveNodes:
             f"Candidate SQL:\n{state.get('candidate_sql', '')}\n\n"
             f"Introspected PostgreSQL catalog:\n{state['schema_prompt']}"
         )
-        output = await _invoke_structured(
+        output, ledger_record = await _invoke_structured(
             self._get_active_llm(),
             QueryReviewOutput,
             QUERY_REVIEWER_SYSTEM_PROMPT,
             prompt,
             timeout_seconds=self._llm_timeout_seconds,
+            stage_id=stage,
         )
 
         duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
@@ -373,6 +477,8 @@ class DetectiveNodes:
                 "attempt": attempt,
                 "duration_ms": duration_ms,
                 "summary": summary,
+                "tokens": ledger_record["total_tokens"],
+                "savings_usd": ledger_record["estimated_savings_usd"],
             },
         )
 
@@ -398,6 +504,7 @@ class DetectiveNodes:
                     summary=summary,
                 )
             ],
+            "token_ledger_entries": [ledger_record],
         }
 
     async def security_gate(
@@ -692,12 +799,13 @@ class DetectiveNodes:
         )
 
         try:
-            output = await _invoke_structured(
+            output, ledger_record = await _invoke_structured(
                 self._get_active_llm(),
                 ResultExplanationOutput,
                 RESULT_EXPLAINER_SYSTEM_PROMPT,
                 prompt,
                 timeout_seconds=self._llm_timeout_seconds,
+                stage_id=stage,
             )
             duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
             summary = "Generated grounded explanation of query results"
@@ -711,6 +819,8 @@ class DetectiveNodes:
                     "attempt": 1,
                     "duration_ms": duration_ms,
                     "summary": summary,
+                    "tokens": ledger_record["total_tokens"],
+                    "savings_usd": ledger_record["estimated_savings_usd"],
                 },
             )
             return {
@@ -727,6 +837,7 @@ class DetectiveNodes:
                         summary=summary,
                     )
                 ],
+                "token_ledger_entries": [ledger_record],
             }
         except Exception:
             duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
@@ -812,12 +923,13 @@ class DetectiveNodes:
         # Bound optimization synthesis tightly so it never stalls workflow completion.
         opt_timeout = min(self._llm_timeout_seconds, 12)
         try:
-            output = await _invoke_structured(
+            output, ledger_record = await _invoke_structured(
                 self._get_active_llm(),
                 OptimizationSynthesisOutput,
                 OPTIMIZATION_AGENT_SYSTEM_PROMPT,
                 prompt,
                 timeout_seconds=opt_timeout,
+                stage_id="optimization_agent",
             )
             recs = [item.model_dump() for item in output.recommendations] or deterministic_recs
             duration_ms = round((time.perf_counter() - start) * 1000.0, 2)
@@ -830,11 +942,14 @@ class DetectiveNodes:
                     "duration_ms": duration_ms,
                     "recommendation_count": len(recs),
                     "recommendations": recs,
+                    "tokens": ledger_record["total_tokens"],
+                    "savings_usd": ledger_record["estimated_savings_usd"],
                 },
             )
             return {
                 "optimization_status": "completed",
                 "optimization_recommendations": recs,
+                "token_ledger_entries": [ledger_record],
             }
         except Exception:
             duration_ms = round((time.perf_counter() - start) * 1000.0, 2)

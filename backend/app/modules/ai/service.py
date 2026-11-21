@@ -16,6 +16,7 @@ from app.modules.ai.nodes import EventEmitter
 from app.modules.ai.state import DetectiveState
 from app.modules.connections.registry import DatabaseConnectionSpec
 from app.modules.database.introspector import format_compact_schema_prompt, introspect_schema
+from app.modules.evallaps.repository import EvalLapsRepository
 from app.modules.execution.executor import SQLExecutor
 from app.modules.execution.plan_parser import PlanSummary
 from app.modules.history.repository import QueryRunRecordInput, QueryRunRepository
@@ -77,12 +78,14 @@ class DetectiveWorkflowService:
         sql_executor: SQLExecutor,
         history_repo: QueryRunRepository,
         llm_factory: LLMFactory = build_chat_model,
+        token_ledger_repo: EvalLapsRepository | None = None,
     ) -> None:
         self._settings = settings
         self._gate = security_gate
         self._executor = sql_executor
         self._history_repo = history_repo
         self._llm_factory = llm_factory
+        self._token_ledger_repo = token_ledger_repo
 
     def _record_interrupted_run(
         self,
@@ -218,6 +221,13 @@ class DetectiveWorkflowService:
             )
         )
 
+        token_entries = final_state.get("token_ledger_entries") or []
+        if token_entries and self._token_ledger_repo is not None:
+            self._token_ledger_repo.record_entries(run_id=run_id, entries=token_entries)
+
+        total_tokens = sum(entry["total_tokens"] for entry in token_entries)
+        total_savings = round(sum(entry["estimated_savings_usd"] for entry in token_entries), 6)
+
         explanation_resp: ExplanationResponse | None = None
         if final_state.get("explanation_summary"):
             explanation_resp = ExplanationResponse(
@@ -276,4 +286,6 @@ class DetectiveWorkflowService:
             ],
             warnings=final_state.get("warnings", []),
             stages=[StageStatusResponse(**stage) for stage in final_state.get("stages", [])],
+            total_tokens=total_tokens,
+            estimated_savings_usd=total_savings,
         )

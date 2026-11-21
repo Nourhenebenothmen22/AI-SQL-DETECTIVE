@@ -1,6 +1,6 @@
 """SQLAlchemy 2 ORM models for ecommerce (demo target) and app_meta (telemetry)."""
 
-from app.modules.database.models.app_meta import QueryRun
+from app.modules.database.models.app_meta import LLMTokenLedger, QueryRun
 from app.modules.database.models.ecommerce import (
     Address,
     Category,
@@ -18,6 +18,7 @@ __all__ = [
     "Category",
     "Customer",
     "Inventory",
+    "LLMTokenLedger",
     "Order",
     "OrderItem",
     "Payment",

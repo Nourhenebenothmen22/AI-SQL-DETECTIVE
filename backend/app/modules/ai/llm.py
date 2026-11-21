@@ -239,6 +239,17 @@ def _call_init_chat_model(model: str, model_provider: str, **kwargs: Any) -> Bas
         ) from exc
 
 
+def _decorate_model(m: BaseChatModel | None, provider: str, raw_key: str) -> BaseChatModel | None:
+    if m is not None:
+        tail = raw_key[-4:] if len(raw_key) >= 4 else "key"
+        try:
+            object.__setattr__(m, "_provider_name", provider.strip().lower())
+            object.__setattr__(m, "_key_fingerprint", tail)
+        except Exception:
+            pass
+    return m
+
+
 def _instantiate_single_model(
     provider_name: str,
     key: Any,
@@ -255,9 +266,16 @@ def _instantiate_single_model(
     temperature = settings.llm_temperature
     timeout = settings.llm_timeout_seconds
 
+    def _create(model: str, model_provider: str, **kwargs: Any) -> BaseChatModel:
+        return _decorate_model(  # type: ignore[return-value]
+            _call_init_chat_model(model=model, model_provider=model_provider, **kwargs),
+            provider=p,
+            raw_key=raw_key,
+        )
+
     # 1. Groq Cloud (Ultra-fast LPU inference, OpenAI-compatible)
     if p == "groq":
-        return _call_init_chat_model(
+        return _create(
             model=settings.groq_model,
             model_provider="openai",
             temperature=temperature,
@@ -269,7 +287,7 @@ def _instantiate_single_model(
 
     # 2. SambaNova Cloud (High-speed SN40L chips, OpenAI-compatible)
     if p in ("sambanova", "sambanova.ai"):
-        return _call_init_chat_model(
+        return _create(
             model=settings.sambanova_model,
             model_provider="openai",
             temperature=temperature,
@@ -281,7 +299,7 @@ def _instantiate_single_model(
 
     # 3. OpenRouter (Multi-model aggregator with free & paid tiers)
     if p == "openrouter":
-        return _call_init_chat_model(
+        return _create(
             model=settings.openrouter_model,
             model_provider="openai",
             temperature=temperature,
@@ -294,7 +312,7 @@ def _instantiate_single_model(
     # 4. Cloudflare Workers AI (10,000 neurons/day free, OpenAI-compatible)
     if p in ("cloudflare", "cloudflare_ai"):
         base_url = settings.cloudflare_base_url or "https://api.cloudflare.com/client/v4"
-        return _call_init_chat_model(
+        return _create(
             model=settings.cloudflare_model,
             model_provider="openai",
             temperature=temperature,
@@ -306,7 +324,7 @@ def _instantiate_single_model(
 
     # 5. Cohere (Command R+ via OpenAI-compatible endpoint)
     if p == "cohere":
-        return _call_init_chat_model(
+        return _create(
             model=settings.cohere_model,
             model_provider="openai",
             temperature=temperature,
@@ -319,7 +337,7 @@ def _instantiate_single_model(
     # 6. z.ai / Custom Provider (OpenAI-compatible)
     if p in ("zai", "z.ai"):
         base_url = settings.zai_base_url or "https://api.z.ai/v1"
-        return _call_init_chat_model(
+        return _create(
             model=settings.zai_model,
             model_provider="openai",
             temperature=temperature,
@@ -332,7 +350,7 @@ def _instantiate_single_model(
     # 6b. Kimi / Moonshot AI (OpenAI-compatible)
     if p in ("kimi", "moonshot"):
         base_url = settings.kimi_base_url or "https://api.moonshot.cn/v1"
-        return _call_init_chat_model(
+        return _create(
             model=settings.kimi_model,
             model_provider="openai",
             temperature=temperature,
@@ -345,7 +363,7 @@ def _instantiate_single_model(
     # 6c. Novita AI (OpenAI-compatible)
     if p == "novita":
         base_url = settings.novita_base_url or "https://api.novita.ai/v3/openai"
-        return _call_init_chat_model(
+        return _create(
             model=settings.novita_model,
             model_provider="openai",
             temperature=temperature,
@@ -358,7 +376,7 @@ def _instantiate_single_model(
     # 6d. Meta (OpenAI-compatible Llama endpoint)
     if p == "meta":
         base_url = settings.meta_base_url or "https://api.groq.com/openai/v1"
-        return _call_init_chat_model(
+        return _create(
             model=settings.meta_model,
             model_provider="openai",
             temperature=temperature,
@@ -371,7 +389,7 @@ def _instantiate_single_model(
     # 7. Google Gemini (Google AI Studio native)
     if p in ("google", "google_genai", "gemini"):
         model_name = settings.google_model or "gemini-2.0-flash"
-        return _call_init_chat_model(
+        return _create(
             model=model_name,
             model_provider="google_genai",
             temperature=temperature,
@@ -383,7 +401,7 @@ def _instantiate_single_model(
     # 8. Mistral AI (Codestral / Mistral native)
     if p in ("mistral", "mistralai"):
         model_name = settings.mistral_model or "mistral-small-latest"
-        return _call_init_chat_model(
+        return _create(
             model=model_name,
             model_provider="mistralai",
             temperature=temperature,
@@ -402,7 +420,7 @@ def _instantiate_single_model(
         }
         if settings.llm_base_url:
             kwargs["base_url"] = settings.llm_base_url
-        return _call_init_chat_model(
+        return _create(
             model=settings.openai_model,
             model_provider="openai",
             **kwargs,
@@ -417,7 +435,7 @@ def _instantiate_single_model(
     }
     if settings.llm_base_url:
         kwargs["base_url"] = settings.llm_base_url
-    return _call_init_chat_model(
+    return _create(
         model=settings.llm_model,
         model_provider=settings.llm_provider,
         **kwargs,
@@ -511,6 +529,16 @@ def build_chat_model(
             len(settings.configured_llm_providers),
             [k_id for k_id, _ in ordered],
         )
-        return primary.with_fallbacks(models[1:])
+        resilient_model = primary.with_fallbacks(models[1:])
+        try:
+            object.__setattr__(
+                resilient_model, "_provider_name", getattr(primary, "_provider_name", "llm")
+            )
+            object.__setattr__(
+                resilient_model, "_key_fingerprint", getattr(primary, "_key_fingerprint", "key")
+            )
+        except Exception:
+            pass
+        return resilient_model
 
     return primary
