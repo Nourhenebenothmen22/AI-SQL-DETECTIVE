@@ -1,7 +1,7 @@
 # 🕵️‍♂️ AI SQL Detective
 
 <p align="center">
-  <strong>L'assistant d'investigation PostgreSQL IA de nouvelle génération, sécurisé par AST déterministe et orchestré par LangGraph.</strong>
+  <strong>L'assistant d'investigation PostgreSQL IA de nouvelle génération, sécurisé par AST déterministe, orchestré par LangGraph et propulsé par une architecture 100% Free-Tier résiliente avec observabilité FinOps (EvalLaps).</strong>
 </p>
 
 <p align="center">
@@ -13,8 +13,10 @@
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Next.js-15.5-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js 15" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-108_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 108 Passed" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-132_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 132 Passed" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-6_E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/LLM-100%25_Free--Tier-06B6D4?style=flat-square&logo=lightning&logoColor=white" alt="100% Free-Tier" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/EvalLaps-LLMOps_%26_FinOps-6366F1?style=flat-square&logo=speedtest&logoColor=white" alt="EvalLaps LLMOps & FinOps" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Security-100%25_Deterministic-10B981?style=flat-square&logo=shield&logoColor=white" alt="Deterministic Security" /></a>
 </p>
 
@@ -26,12 +28,14 @@
 2. [Les Enjeux & L'Impact Métier](#-les-enjeux--limpact-métier)
 3. [Les Acteurs & Personas Ciblés](#-les-acteurs--personas-ciblés)
 4. [Architecture & Workflow Multi-Agents (LangGraph)](#-architecture--workflow-multi-agents-langgraph)
-5. [Sécurité en Profondeur (Defense-in-Depth)](#-sécurité-en-profondeur-defense-in-depth)
-6. [Catalogue des Fonctionnalités Clés](#-catalogue-des-fonctionnalités-clés)
-7. [Spécification des Endpoints de l'API REST (`/api/v1`)](#-spécification-des-endpoints-de-lapi-rest-apiv1)
-8. [Guide de Démarrage & Déploiement Pas-à-Pas](#-guide-de-démarrage--déploiement-pas-à-pas)
-9. [Qualité, Tests & Intégration Continue (CI/CD)](#-qualité-tests--intégration-continue-cicd)
-10. [Stack Technique Complète](#-stack-technique-complète)
+5. [Architecture LLM 100% Free-Tier & Résilience Multi-Fournisseurs](#-architecture-llm-100-free-tier--résilience-multi-fournisseurs)
+6. [Sécurité en Profondeur (Defense-in-Depth)](#-sécurité-en-profondeur-defense-in-depth)
+7. [Module EvalLaps (LLMOps & FinOps Observability)](#-module-evallaps-llmops--finops-observability)
+8. [Catalogue des Fonctionnalités Clés](#-catalogue-des-fonctionnalités-clés)
+9. [Spécification des Endpoints de l'API REST (`/api/v1`)](#-spécification-des-endpoints-de-lapi-rest-apiv1)
+10. [Guide de Démarrage & Déploiement Pas-à-Pas](#-guide-de-démarrage--déploiement-pas-à-pas)
+11. [Qualité, Tests & Intégration Continue (CI/CD)](#-qualité-tests--intégration-continue-cicd)
+12. [Stack Technique Complète](#-stack-technique-complète)
 
 ---
 
@@ -44,14 +48,15 @@ La promesse de convertir le langage naturel en requêtes SQL via un modèle de l
 *   ❌ **Risque de Destruction de Données :** Un LLM non bridé peut halluciner ou exécuter des requêtes destructives (`DROP TABLE`, `DELETE`, `UPDATE`, `TRUNCATE` ou des CTEs modifiantes comme `WITH d AS (DELETE ...)`).
 *   ❌ **Hallucinations Structurelles :** Le LLM invente des colonnes, des jointures inexistantes ou cible des bases arbitraires hors périmètre.
 *   ❌ **Attaques par Injection & DoS :** Des invites malveillantes peuvent déclencher des fonctions d'évasion système (`pg_read_file`, `pg_sleep`, `lo_import`, `dblink`) ou saturer la mémoire avec des `SELECT *` sans clause `LIMIT`.
+*   ❌ **Dépendance & Coûts Prohibitifs des Modèles Propriétaires :** Verrouillage technologique auprès de modèles payants (ex: OpenAI GPT-4o) avec des factures imprévisibles et des risques de blocage par épuisement de quota.
 *   ❌ **Effet « Boîte Noire » :** Les analystes et développeurs reçoivent des chiffres sans savoir quelle requête exacte a tourné, sans explication des résultats et sans visibilité sur le plan d'exécution PostgreSQL.
 
 ### La Réponse d'AI SQL Detective
 
-**AI SQL Detective** résout cette impasse grâce à un principe d'ingénierie fondamental : **Le LLM n'est JAMAIS la frontière de sécurité**.
+**AI SQL Detective** résout cette impasse grâce à deux principes d'ingénierie fondamentaux :
 
-> [!IMPORTANT]
-> **Règle d'or de sécurité :** Toutes les requêtes (générées par IA ou saisies manuellement) doivent être interceptées et validées par une **Passerelle de Sécurité Déterministe (AST SQLGlot)**, exécutées par un utilisateur PostgreSQL strictement restreint en lecture seule avec un quota de temps (`statement_timeout`) et de lignes obligatoires.
+1.  **Le LLM n'est JAMAIS la frontière de sécurité :** Toutes les requêtes (générées par IA ou saisies manuellement) doivent être interceptées et validées par une **Passerelle de Sécurité Déterministe (AST SQLGlot)**, exécutées par un utilisateur PostgreSQL strictement restreint en lecture seule avec un quota de temps (`statement_timeout`) et de lignes obligatoire.
+2.  **Souveraineté & Résilience Économique :** Fonctionnement à 100% sur un pool de modèles gratuits et généreux (Groq, SambaNova, OpenRouter, Google, Cloudflare, Cohere, z.ai, Meta) orchestré par un Circuit Breaker intelligent et audité en continu par le module FinOps **EvalLaps**.
 
 ---
 
@@ -61,8 +66,9 @@ La promesse de convertir le langage naturel en requêtes SQL via un modèle de l
 |:---|:---|:---|
 | **Intégrité Absolue des Données** | Éviter toute écriture accidentelle ou injection SQL. | Rôle PostgreSQL `sql_detective_ro` avec `default_transaction_read_only = on` et validation AST SQLGlot bloquant 100% du DDL/DML. |
 | **Démocratisation sans Risque** | Ouvrir la donnée aux profils non-techniques. | Pipeline LangGraph en 7 agents avec vulgarisation contextuelle des résultats (`Result Explainer`). |
+| **Zéro Dépendance Financière** | Éliminer les coûts d'inférence LLM récurrents. | Architecture 100% Free-Tier multi-fournisseurs avec cascade de secours automatique et temps de réponse < 20ms sur Groq. |
 | **Protection des Ressources DB** | Empêcher les requêtes bloquantes ou les scans complets non maîtrisés. | `statement_timeout` (5000ms), `lock_timeout` (1000ms) et analyse des plans `EXPLAIN (FORMAT JSON)` sans jamais exécuter `EXPLAIN ANALYZE`. |
-| **Transparence & Auditabilité** | Savoir qui a exécuté quoi et quand. | Enregistrement automatique de la télémétrie complète dans le schéma dédié `app_meta.query_runs`. |
+| **Observabilité & FinOps** | Maîtriser la consommation de jetons et quantifier le ROI. | Module **EvalLaps** : grand livre comptable PostgreSQL (`app_meta.llm_token_ledger`), diagnostic des renouvellements de quota et calcul des économies vs GPT-4o. |
 
 ---
 
@@ -73,25 +79,30 @@ flowchart LR
     A["Analyste Métier & Product Owner"] -->|"Pose une question en langage naturel"| DETECTIVE["AI SQL Detective"]
     B["Développeur Backend & Data Engineer"] -->|"Édite du SQL dans Monaco & valide l'AST"| DETECTIVE
     C["Administrateur de Base (DBA)"] -->|"Audite les plans EXPLAIN & l'historique"| DETECTIVE
+    D["Lead FinOps & Architecte LLMOps"] -->|"Supervise quotas, tokens & économies sur EvalLaps"| DETECTIVE
 ```
 
 ### 1. L'Analyste Data & Product Owner
-*   **Besoin :** Extraire rapidement des insights chiffrés (ex. *"Quel est le revenu livré par segment de client ?"*) sans attendre la disponibilité d'un data engineer.
-*   **Bénéfice :** Saisie intuitive, progression visuelle par étape (SSE), grille de résultats triable, synthèse explicative générée et suggestion de graphiques.
+*   **Besoin :** Extraire rapidement des insights chiffrés (ex. *"Quels sont les 5 meilleurs clients par chiffre d'affaires total livré ?"*) sans attendre la disponibilité d'un data engineer.
+*   **Bénéfice :** Saisie intuitive, progression visuelle par étape (SSE), grille de résultats triable, synthèse explicative générée et badge de consommation de tokens en direct.
 
 ### 2. Le Développeur Fullstack & Data Engineer
-*   **Besoin :** Prototyper des requêtes complexes sur un schéma relationnel riche sans risque de casser la base.
+*   **Besoin :** Prototyper des requêtes complexes sur un schéma relationnel riche sans risque d'endommager la base.
 *   **Bénéfice :** Explorateur de catalogue PostgreSQL complet, éditeur Monaco professionnel avec coloration syntaxique sombre, détection immédiate des violations de sécurité et recommandations d'optimisation d'index B-Tree.
 
 ### 3. Le Database Administrator (DBA)
 *   **Besoin :** Garantir que les requêtes ne dégradent pas la performance du cluster de production.
 *   **Bénéfice :** Isolation stricte des schémas (`ecommerce` vs `app_meta`), détection proactive des scans séquentiels (`Seq Scan`), historique d'audit exhaustif et métriques de latence consolidées (Recharts).
 
+### 4. Le Lead FinOps & Architecte LLMOps
+*   **Besoin :** Diagnostiquer la santé des clés d'API, anticiper les épuisements de quota et quantifier les économies budgétaires.
+*   **Bénéfice :** Dashboard EvalLaps dédié (`/evallaps`), suivi en temps réel du Circuit Breaker avec compte à rebours de renouvellement et calcul automatique des économies nettes.
+
 ---
 
 ## 🧠 Architecture & Workflow Multi-Agents (LangGraph)
 
-AI SQL Detective orchestre son intelligence via une machine à états typée **LangGraph** articulée autour de **7 agents spécialisés** :
+AI SQL Detective orchestre son intelligence cognitive via une machine à états typée **LangGraph** articulée autour de **7 agents spécialisés**, sans aucune heuristique `if-else` dans les couches de décision métier (conformément à `.agent/roles.md`) :
 
 ```mermaid
 flowchart TD
@@ -130,6 +141,58 @@ flowchart TD
 
 ---
 
+## ⚡ Architecture LLM 100% Free-Tier & Résilience Multi-Fournisseurs
+
+### Éradication du Modèle Payant OpenAI & Souveraineté Technique
+
+Conformément à la directive d'architecture, **AI SQL Detective n'utilise aucun modèle commercial payant d'OpenAI**. 
+* Les variables `OPENAI_API_KEY` ont été définitivement éradiquées du projet.
+* L'accès LLM s'effectue au travers du protocole HTTP standardisé OpenAI-compatible (`model_provider="openai"` de LangChain), ce qui permet de piloter les infrastructures gratuites les plus performantes du marché avec une interopérabilité totale.
+
+### Fournisseur Primaire & Chaîne de Repli (Failover Cascade)
+
+Le système est configuré avec **Groq Cloud LPU** en fournisseur primaire par défaut (< 20ms de latence d'inférence), adossé à une cascade ordonnée de fournisseurs gratuits :
+
+```
+LLM_FALLBACK_CHAIN="groq,sambanova,openrouter,google,cohere,cloudflare,zai,meta"
+```
+
+```mermaid
+flowchart LR
+    REQ([Requête Cognitive]) --> G["1. Groq Cloud<br/>(qwen/qwen3.8-27b)"]
+    G -- "HTTP 429 / Erreur" --> SN["2. SambaNova<br/>(gemma-4-31B-it)"]
+    SN -- "HTTP 429 / Erreur" --> OR["3. OpenRouter<br/>(dolphin3.0-r1-mistral:free)"]
+    OR -- "HTTP 429 / Erreur" --> GOOG["4. Google AI Studio<br/>(gemini-2.5-flash)"]
+    GOOG -- "HTTP 429 / Erreur" --> COH["5. Cohere Platform<br/>(command-r-plus)"]
+    COH -- "HTTP 429 / Erreur" --> CF["6. Cloudflare Workers AI<br/>(@cf/meta/llama-3.3-70b)"]
+    CF -- "HTTP 429 / Erreur" --> ZAI["7. z.ai / Zhipu<br/>(glm-4-flash)"]
+    ZAI -- "HTTP 429 / Erreur" --> META["8. Meta AI Direct<br/>(llama-3.3-70b-instruct)"]
+```
+
+### Cartographie des Modèles Vérifiés & Garantis HTTP 200
+
+Chaque fournisseur gratuit est appairé avec un modèle testé et validé, garantissant l'absence d'erreurs 404/403 :
+
+| Fournisseur | Variable Clé API | Modèle Garanti HTTP 200 | Atout Spécifique |
+|:---|:---|:---|:---|
+| **Groq Cloud** | `GROQ_API_KEYS` | `qwen/qwen3.8-27b` | Ultra-faible latence (< 20ms LPU) |
+| **SambaNova Systems** | `SAMBANOVA_API_KEYS` | `gemma-4-31B-it` | Débit record (> 440 tokens/s sur SN40L) |
+| **OpenRouter Hub** | `OPENROUTER_API_KEYS` | `cognitivecomputations/dolphin3.0-r1-mistral-24b:free` | Réseau distribué gratuit |
+| **Google AI Studio** | `GOOGLE_API_KEYS` | `gemini-2.5-flash` | Raisonnement poussé & large contexte |
+| **Cohere Platform** | `COHERE_API_KEYS` | `command-r-plus` | Analyse sémantique & extraction structurée |
+| **Cloudflare Workers AI**| `CLOUDFLARE_API_KEYS` | `@cf/meta/llama-3.3-70b-instruct` | Inférence Edge mondiale |
+| **z.ai Platform** | `ZAI_API_KEYS` | `glm-4-flash` | Inférence cognitive rapide |
+| **Meta AI Direct** | `META_API_KEYS` | `llama-3.3-70b-instruct` | Modèle open-source de référence |
+
+### Circuit Breaker Intelligent avec Quarantaine Adaptative
+
+En cas de saturation de quota (`HTTP 429 Too Many Requests`) ou d'erreur d'autorisation (`HTTP 401/402`) :
+1.  Le `LLMCircuitBreaker` isole **immédiatement et uniquement** l'empreinte de la clé concernée (`ex: groq:y3HA`) pour une durée paramétrable (TTL 300s).
+2.  Le moteur bascule de manière transparente sur la clé suivante ou le fournisseur suivant dans la chaîne de repli, **sans interruption pour l'utilisateur**.
+3.  À l'expiration du TTL, la clé est automatiquement réintégrée dans le pool sain.
+
+---
+
 ## 🛡️ Sécurité en Profondeur (Defense-in-Depth)
 
 La sécurité d'AI SQL Detective repose sur **5 niveaux hermétiques** :
@@ -155,7 +218,7 @@ L'exécuteur SQL (`SQLExecutor`) refuse structurellement les chaînes de caract�
 La base de données est partitionnée entre 3 rôles aux privilèges minimaux :
 *   `sql_detective_migrator` : Propriétaire des schémas `ecommerce` et `app_meta` (utilisé uniquement par Alembic et le script de seed).
 *   `sql_detective_ro` : Dédié à l'exécution des requêtes du Workbench. Accès `SELECT` exclusif sur le schéma `ecommerce`. `default_transaction_read_only = on`. Zéro privilège sur `app_meta` ou `public`.
-*   `sql_detective_app` : Dédié à la télémétrie. Accès restreint à `app_meta.query_runs`. Zéro accès en lecture/écriture sur `ecommerce`.
+*   `sql_detective_app` : Dédié à la télémétrie. Accès restreint à `app_meta.query_runs` et `app_meta.llm_token_ledger`. Zéro accès en lecture/écriture sur `ecommerce`.
 
 ### 4. Sonde de Troncation Déterministe (`LIMIT + 1`)
 Pour éviter la saturation de la mémoire et les faux positifs de troncature :
@@ -165,8 +228,60 @@ Pour éviter la saturation de la mémoire et les faux positifs de troncature :
 
 ### 5. Hygiène des Secrets & Masquage des Logs
 *   Tous les mots de passe et DSNs sont encapsulés dans des objets Pydantic `SecretStr`.
-*   Le filtre de journalisation `SecretRedactingFilter` intercepte et masque automatiquement les identifiants dans les URLs PostgreSQL (`postgresql://user:***@host`), les Bearer tokens et les clés d'API (OpenAI, Anthropic, Google).
-*   Aucun secret n'est exposé au frontend (zéro préfixe `NEXT_PUBLIC_` sur des données sensibles).
+*   Le filtre de journalisation `SecretRedactingFilter` intercepte et masque automatiquement les identifiants dans les URLs PostgreSQL (`postgresql://user:***@host`), les Bearer tokens et les clés d'API.
+*   Les clés d'API ne sont **JAMAIS** persistées en clair en base : seule une empreinte anonymisée de 4 caractères (ex: `...y3HA`) est stockée pour l'audit.
+
+---
+
+## 📊 Module EvalLaps (LLMOps & FinOps Observability)
+
+**EvalLaps** est le sous-système natif d'observabilité LLMOps et FinOps d'AI SQL Detective. Il permet de mesurer avec précision chirurgicale l'efficience des modèles, la consommation de tokens et la rentabilité financière de l'architecture gratuite.
+
+```mermaid
+flowchart TD
+    AGENT["Agent Cognitif (LangChain Node)"] -->|"Usage Metadata natif"| CAPTURE["Capture Asynchrone"]
+    CAPTURE --> LEDGER[("Table PostgreSQL<br/>app_meta.llm_token_ledger")]
+    
+    LEDGER --> FINOPS["Calculateur FinOps<br/>(Économies vs GPT-4o Reference)"]
+    LEDGER --> RENEWAL["Moteur de Diagnostic Quotas<br/>(4 Profils de Renouvellement)"]
+    LEDGER --> CB_HUD["Circuit Breaker Health HUD<br/>(Quarantaines & Décompte TTL)"]
+
+    FINOPS --> DASHBOARD["Dashboard UI /evallaps & Workbench Badge"]
+    RENEWAL --> DASHBOARD
+    CB_HUD --> DASHBOARD
+```
+
+### 1. Le Grand Livre Comptable des Tokens (`app_meta.llm_token_ledger`)
+
+Chaque appel cognitif (Schema Analyst, SQL Generator, Query Reviewer, Result Explainer, Optimization Agent) enregistre de manière asynchrone sa télémétrie dans PostgreSQL :
+*   `run_id` (UUID) : Lien vers la session d'investigation.
+*   `stage_id` : L'agent précis ayant sollicité le LLM.
+*   `provider_name` : Le fournisseur d'inférence (`groq`, `sambanova`, etc.).
+*   `key_fingerprint` : Empreinte sécurisée anonymisée (ex: `...y3HA`).
+*   `prompt_tokens`, `completion_tokens`, `total_tokens` : Données de consommation exactes issues des métadonnées LangChain.
+*   `estimated_savings_usd` : Économies nettes estimées.
+*   `latency_ms`, `http_status` : Performance d'inférence et statut HTTP.
+
+### 2. Calculateur d'Économies FinOps (Baseline GPT-4o)
+
+EvalLaps compare en continu le coût réel engagé (**0,00 \$** grâce au pool gratuit) face aux tarifs de référence de l'industrie :
+$$\text{Coût Référent} = \left(\text{Prompt Tokens} \times \frac{\$2.50}{1\,000\,000}\right) + \left(\text{Completion Tokens} \times \frac{\$10.00}{1\,000\,000}\right)$$
+$$\text{Économies Financières Réalisées} = \text{Coût Référent} - \$0.00$$
+
+### 3. Diagnostic des 4 Profils de Renouvellement de Quota
+
+EvalLaps catégorise dynamiquement chaque fournisseur pour offrir une visibilité prédictive sur la recharge des quotas :
+1.  **Sliding Window 1m (Fenêtre Glissante 60s) :** Réinitialisation continue du quota TPM/RPM toutes les 60 secondes (ex: Groq, SambaNova, Meta).
+2.  **Rolling Daily 24h (Journalier Glissant) :** Remise à zéro automatique du compteur RPD chaque jour à 00:00 UTC (ex: Google AI Studio, Cloudflare Workers AI, OpenRouter).
+3.  **Monthly Credits (Crédits Mensuels) :** Renouvellement de l'enveloppe le 1er de chaque mois calendaire (ex: Cohere Platform).
+4.  **Quota Static Tier (Niveau Statique) :** Volume fixe d'expérimentation sans recharge automatique programmée (ex: z.ai).
+
+### 4. Circuit Breaker Health HUD en Temps Réel
+
+Accessible directement sur la page `/evallaps` avec actualisation continue par polling à 5 secondes :
+*   **Statut Global du Pool :** Indicateur visuel `All Healthy` ou alerte `Keys Quarantined`.
+*   **Gestion des Quarantaines :** Affichage de la clé mise à l'écart suite à une erreur 429, du code d'erreur HTTP, de la durée de mise en quarantaine et du compte à rebours précis avant réintégration.
+*   **Visualiseur de Pipeline de Repli :** Chaîne de secours active montrant en direct vers quel fournisseur le trafic bascule.
 
 ---
 
@@ -182,7 +297,9 @@ AI SQL Detective propose une interface DevTools haut de gamme (style Linear, Sup
 | **Grille de Résultats Interactive** | Tableau de données fluide avec en-têtes collants (*sticky headers*), zébrures douces, tri multi-colonnes (`aria-sort`), formatage typé (dates, devises, badges pour `NULL`), alerte de troncature et export instantané au format CSV. |
 | **Security & Review Panel** | Rapport détaillé affichant le statut déterministe (`PASSED` / `BLOCKED`), la liste des 6 règles vérifiées par l'AST SQLGlot et les notes de révision sémantique. |
 | **Optimization Panel** | Synthèse des métriques du plan `EXPLAIN (FORMAT JSON)` (coût total, nœud racine, scan séquentiel détecté) et propositions d'index B-Tree composites avec copie en un clic. |
-| **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques modernisés intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables (tooltips Obsidian Dark avec police JetBrains Mono). |
+| **Dashboard EvalLaps (`/evallaps`)** | Tableau de bord FinOps complet avec cartes KPI, répartition des tokens par agent (Recharts), catalogue des renouvellements de quota et HUD du Circuit Breaker. |
+| **FinOps Live Badge (Workbench)** | Badge visuel sous les résultats SQL indiquant le fournisseur utilisé, les tokens consommés sur la requête et les économies nettes générées. |
+| **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques modernisés intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables. |
 | **Audit & History Log** | Consultation des exécutions passées paginées, filtrage par statut et bouton de rechargement direct dans le Workbench via le paramètre d'URL `?runId=`. |
 | **AI What-If Scenario Sandbox** | Simulateur de conditions de marché par IA (Black Friday, Churn VIP, Ruptures de stock) avec injection relationnelle atomique (PK/FK cohérentes) et réinitialisation instantanée au seed doré de baseline. |
 
@@ -206,6 +323,12 @@ Tous les endpoints sont fortement typés avec Pydantic v2 et documentés via Ope
 | `GET` | `/api/v1/analytics` | `?connection_id=` | `AnalyticsDashboardResponse` | Agrégations télémétriques et statistiques de taille/lignes des tables PostgreSQL. |
 | `POST` | `/api/v1/scenarios/generate` | `ScenarioGenerateRequest` | `ScenarioGenerateResponse` | Simulation en langage naturel de scénarios synthétiques avec insertion atomique. |
 | `POST` | `/api/v1/scenarios/reset` | *-* | `ScenarioResetResponse` | Réinitialisation instantanée de la base au seed déterministe de référence. |
+| `GET` | `/api/v1/evallaps/summary` | `?window_days=` | `EvalLapsSummaryResponse` | Synthèse FinOps : tokens consommés, requêtes 200 OK et économies cumulées en USD. |
+| `GET` | `/api/v1/evallaps/providers` | `?window_days=` | `ProviderUsageResponse` | Consommation granulaire par fournisseur avec empreintes de clés anonymisées. |
+| `GET` | `/api/v1/evallaps/stages` | `?window_days=` | `StageUsageResponse` | Répartition de la consommation de jetons (Prompt vs Completion) par agent. |
+| `GET` | `/api/v1/evallaps/runs/{run_id}`| *-* | `RunLedgerDetailResponse` | Télémétrie détaillée de tous les appels LLM ayant constitué une exécution donnée. |
+| `GET` | `/api/v1/evallaps/renewals` | *-* | `RenewalCatalogResponse` | Catalogue exhaustif des 10 fournisseurs avec périodicité de renouvellement et quotas. |
+| `GET` | `/api/v1/evallaps/circuit-breaker`| *-* | `CircuitBreakerStatusResponse`| Statut live du Circuit Breaker : quarantaines actives, décomptes TTL et chaîne active. |
 
 ---
 
@@ -213,14 +336,14 @@ Tous les endpoints sont fortement typés avec Pydantic v2 et documentés via Ope
 
 ### Prérequis Système
 *   **Docker & Docker Compose**
-*   **Python 3.12+** avec le gestionnaire de paquets [**uv**](https://docs.astral.sh/uv/)
-*   **Node.js 22+** avec **npm**
+*   **Python 3.11+ / 3.12+** avec le gestionnaire de paquets [**uv**](https://docs.astral.sh/uv/)
+*   **Node.js 20+ / 22+** avec **npm**
 
 ---
 
 ### 1. Configuration de l'Environnement (Racine `.env`)
 
-Copiez le template `.env.example` à la racine du projet et définissez vos identifiants locaux :
+Copiez le template `.env.example` à la racine du projet et configurez vos identifiants :
 
 ```bash
 cp .env.example .env
@@ -229,8 +352,10 @@ cp .env.example .env
 > [!TIP]
 > **Port PostgreSQL Hôte :** Le port hôte est configuré par défaut sur `5434` (`POSTGRES_PORT=5434`) afin d'éviter tout conflit si vous avez déjà d'autres instances PostgreSQL locales sur les ports `5432` ou `5433`.
 
-Variables requises dans le fichier `.env` :
+Variables recommandées dans le fichier `.env` :
+
 ```ini
+# Base de données PostgreSQL
 POSTGRES_DB=ai_sql_detective
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=votre_mot_de_passe_admin_local
@@ -250,27 +375,43 @@ DATABASE_RO_URL=postgresql+psycopg://sql_detective_ro:votre_mot_de_passe_ro_loca
 DATABASE_APP_URL=postgresql+psycopg://sql_detective_app:votre_mot_de_passe_app_local@localhost:5434/ai_sql_detective
 DATABASE_MIGRATOR_URL=postgresql+psycopg://sql_detective_migrator:votre_mot_de_passe_migrator_local@localhost:5434/ai_sql_detective
 
-# Configuration CORS (Requis pour l'accès web local & les tests Playwright)
+# CORS (Frontend Next.js)
 CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 
-# Configuration LLM (Optionnelle pour la saisie manuelle, requise pour le langage naturel)
-# Option A : OpenAI Direct
-LLM_PROVIDER=openai
-LLM_MODEL=gpt-4o-mini
-LLM_API_KEY=sk-...
+# ==============================================================================
+# CONFIGURATION LLM 100% FREE-TIER (ZÉRO OPENAI PAYANT)
+# ==============================================================================
+LLM_PROVIDER=groq
+LLM_FALLBACK_CHAIN="groq,sambanova,openrouter,google,cohere,cloudflare,zai,meta"
 
-# Option B : OpenRouter (Modèles gratuits ou open-source)
-# LLM_PROVIDER=openai
-# LLM_BASE_URL=https://openrouter.ai/api/v1
-# LLM_MODEL=nvidia/nemotron-3.5-lightning:free
-# LLM_API_KEY=sk-or-v1-...
+# Fournisseurs Gratuits (ajoutez vos tokens)
+GROQ_API_KEYS="gsk_..."
+GROQ_MODEL="qwen/qwen3.8-27b"
+
+SAMBANOVA_API_KEYS="..."
+SAMBANOVA_MODEL="gemma-4-31B-it"
+
+OPENROUTER_API_KEYS="sk-or-v1-..."
+OPENROUTER_MODEL="cognitivecomputations/dolphin3.0-r1-mistral-24b:free"
+
+GOOGLE_API_KEYS="AIzaSy..."
+GOOGLE_MODEL="gemini-2.5-flash"
+
+COHERE_API_KEYS="..."
+COHERE_MODEL="command-r-plus"
+
+CLOUDFLARE_API_KEYS="..."
+CLOUDFLARE_MODEL="@cf/meta/llama-3.3-70b-instruct"
+
+ZAI_API_KEYS="..."
+ZAI_MODEL="glm-4-flash"
 ```
 
 ---
 
 ### 2. Démarrage de la Base, Migrations & Seeding Déterministe
 
-Démarrez le conteneur PostgreSQL 16, appliquez les migrations Alembic et injectez les **57 427 lignes de démonstration e-commerce** :
+Démarrez le conteneur PostgreSQL 16, appliquez les migrations Alembic (dont `0003_add_llm_token_ledger`) et injectez les **57 427 lignes de démonstration e-commerce** :
 
 ```bash
 # Lancement du conteneur PostgreSQL isolé
@@ -306,32 +447,17 @@ npm ci
 npm run dev
 ```
 
-Accédez à l'application sur [http://localhost:3000](http://localhost:3000).
+Accédez à l'application sur [http://localhost:3000](http://localhost:3000) et au dashboard EvalLaps sur [http://localhost:3000/evallaps](http://localhost:3000/evallaps).
 
 ---
 
 ### 4. Déploiement Conteneurisé Complet (Docker Compose)
 
-Vous pouvez également lancer la stack entière (PostgreSQL + Backend + Frontend) via Docker Compose en mode production :
+Vous pouvez également lancer la stack entière (PostgreSQL + Backend + Frontend) via Docker Compose :
 
 ```bash
 docker compose --profile full up --build
 ```
-
----
-
-### 5. Configuration Multi-Fournisseurs LLM
-
-L'architecture supporte nativement plusieurs fournisseurs LLM grâce à `init_chat_model` de LangChain :
-
-*   **OpenAI (Par défaut) :** `LLM_PROVIDER=openai`, `LLM_MODEL=gpt-4o-mini`, `LLM_API_KEY=sk-...`
-*   **OpenRouter (Recommandé pour tester sans quota OpenAI) :** Définissez `LLM_PROVIDER=openai`, `LLM_BASE_URL=https://openrouter.ai/api/v1`, votre clé `LLM_API_KEY=sk-or-v1-...`, et choisissez un modèle comme `nvidia/nemotron-3.5-lightning:free` (100% gratuit et rapide) ou `openai/gpt-4o-mini`.
-*   **Anthropic :** `LLM_PROVIDER=anthropic`, `LLM_MODEL=claude-3-5-sonnet-20241022` (installez le package avec `uv sync --extra anthropic`)
-*   **Google Gemini :** `LLM_PROVIDER=google_genai`, `LLM_MODEL=gemini-1.5-pro` (installez le package avec `uv sync --extra google`)
-*   **Passerelles Compatibles OpenAI (Local/Ollama/vLLM) :** Définissez `LLM_PROVIDER=openai` et configurez `LLM_BASE_URL=http://localhost:11434/v1`.
-
-> [!NOTE]
-> L'image Docker de production (`docker/backend.Dockerfile`) pré-installe automatiquement les adaptateurs Anthropic et Google GenAI, permettant un basculement immédiat par variable d'environnement sans reconstruction de l'image.
 
 ---
 
@@ -345,7 +471,7 @@ cd backend
 uv run ruff check .
 uv run ruff format --check .
 
-# 2. Exécution de la suite de tests Pytest (103 tests unitaires, de sécurité & intégration PG16)
+# 2. Exécution de la suite de tests Pytest (132 tests unitaires, EvalLaps, Circuit Breaker & intégration PG16)
 uv run pytest -v
 
 # 3. Contrôle du typage strict TypeScript et linting frontend
@@ -353,14 +479,17 @@ cd ../frontend
 npm run typecheck
 npm run lint
 
-# 4. Tests End-to-End Playwright (Workbench, Sécurité, SSE, Analytics, History)
+# 4. Compilation et vérification du build Next.js
+npm run build
+
+# 5. Tests End-to-End Playwright (Workbench, Sécurité, SSE, Analytics, History)
 npm run test:e2e
 ```
 
 ### Pipeline GitHub Actions (`.github/workflows/ci.yml`)
 
 À chaque `push` ou `pull request` sur la branche `main`, 4 jobs s'exécutent en parallèle :
-1.  **Backend Lint & Unit Tests :** Ruff + Pytest unitaire et suite adversariale AST.
+1.  **Backend Lint & Unit Tests :** Ruff + Pytest unitaire, suite adversariale AST et tests d'observabilité EvalLaps.
 2.  **Backend PostgreSQL 16 Integration :** Provisioning d'un conteneur éphémère PG16, migrations montantes/descendantes, seeding et tests d'isolation des rôles.
 3.  **Frontend Typecheck & Build :** `tsc --noEmit`, ESLint et build de production Next.js.
 4.  **Playwright End-to-End :** Démarrage de la stack complète et validation des parcours utilisateurs critiques.
@@ -372,16 +501,18 @@ npm run test:e2e
 ```
 AI SQL DETECTIVE
 ├── Backend (Python 3.12 / FastAPI)
-│   ├── LangGraph & LangChain      # Orchestration multi-agents
+│   ├── LangGraph & LangChain      # Orchestration cognitive multi-agents
 │   ├── SQLGlot                    # Parser & validateur déterministe d'AST SQL
-│   ├── SQLAlchemy 2 & Psycopg 3   # Moteur ORM et pilote PostgreSQL natif
-│   ├── Pydantic v2 & Settings     # Typage strict et gestion sécurisée des secrets
-│   ├── Alembic                    # Migrations de schéma versionnées
+│   ├── SQLAlchemy 2 & Psycopg 3   # Moteur ORM asynchrone et pilote PostgreSQL natif
+│   ├── Pydantic v2 & Settings     # Typage strict et validation de schéma
+│   ├── Alembic                    # Migrations de schéma (0001, 0002, 0003_llm_token_ledger)
+│   ├── EvalLaps Service           # Module FinOps & comptabilité des tokens LLM
+│   ├── LLMCircuitBreaker          # Tolérance aux pannes & quarantaines 429 adaptatives
 │   └── uv                         # Gestionnaire de paquets ultra-rapide
 │
 ├── Base de données (PostgreSQL 16)
 │   ├── ecommerce schema           # 9 tables de données métier (57 427 lignes)
-│   ├── app_meta schema            # Télémétrie d'audit (query_runs)
+│   ├── app_meta schema            # Télémétrie d'audit (query_runs) et Grand Livre (llm_token_ledger)
 │   └── 3 Rôles Dédiés             # sql_detective_ro, sql_detective_app, sql_detective_migrator
 │
 ├── Frontend (Next.js 15.5.29 / React 19)
@@ -389,13 +520,14 @@ AI SQL DETECTIVE
 │   ├── Obsidian Dark Workbench    # Design tokens DevTools (#070A12, #0D121F, #131B2E, #1E2B45)
 │   ├── Tailwind CSS v4            # Utility-first styling avec tabular-nums natifs
 │   ├── Monaco Editor              # Thème dédié ai-sql-detective-dark & raccourci Ctrl+Enter
-│   ├── Recharts                   # Visualisation analytique (5 figures harmonisées)
+│   ├── Recharts                   # Visualisation analytique et graphique de tokens empilés
+│   ├── EvalLaps Dashboard         # Observabilité des tokens, renouvellements et HUD Circuit Breaker
 │   ├── TanStack Query             # Gestion d'état serveur et cache réactif
 │   └── Lucide React               # Iconographie unifiée à 16px
 │
 └── Infrastructure & Tests
     ├── Docker & Docker Compose    # Environnement de développement et production
-    ├── Pytest & HTTPX             # 103 tests automatisés (unitaires & intégration)
+    ├── Pytest & HTTPX             # 132 tests automatisés (100% verts)
     ├── Playwright                 # Tests End-to-End multi-navigateurs
     └── GitHub Actions             # Intégration continue automatisée
 ```
@@ -403,5 +535,5 @@ AI SQL DETECTIVE
 ---
 
 <p align="center">
-  Conçu avec rigueur pour apporter la puissance de l'IA aux bases relationnelles, sans jamais transiger sur la sécurité.
+  Conçu avec rigueur pour apporter la puissance de l'IA aux bases relationnelles, sans jamais transiger sur la sécurité ni dépendre de modèles payants.
 </p>
