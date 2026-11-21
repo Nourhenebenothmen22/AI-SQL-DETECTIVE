@@ -7,6 +7,7 @@ from app.api.deps import get_current_context, get_evallaps_service
 from app.core.context import RequestContext
 from app.modules.evallaps import EvalLapsService
 from app.schemas.evallaps import (
+    CircuitBreakerStatusResponse,
     EvalLapsSummary,
     ProviderRenewalMetaSchema,
     ProviderUsageSummary,
@@ -66,3 +67,12 @@ def get_provider_renewal_catalog(
 ) -> list[ProviderRenewalMetaSchema]:
     """Retrieve quota reset windows and renewal characteristics for all free-tier providers."""
     return service.get_renewal_diagnostics()
+
+
+@router.get("/circuit-breaker", response_model=CircuitBreakerStatusResponse)
+def get_circuit_breaker_health(
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> CircuitBreakerStatusResponse:
+    """Retrieve real-time health, quarantines, remaining TTLs, and automated quota reset times."""
+    return service.get_circuit_breaker_status()

@@ -24,6 +24,7 @@ import type {
   ValidateSQLResponse,
 } from "@/types/api";
 import type {
+  CircuitBreakerStatusResponse,
   EvalLapsSummary,
   ProviderRenewalMeta,
   ProviderUsageSummary,
@@ -333,5 +334,9 @@ export const apiClient = {
 
   getEvalLapsRenewals(signal?: AbortSignal): Promise<ProviderRenewalMeta[]> {
     return requestJson<ProviderRenewalMeta[]>("/api/v1/evallaps/renewals", { signal });
+  },
+
+  getEvalLapsCircuitBreaker(signal?: AbortSignal): Promise<CircuitBreakerStatusResponse> {
+    return requestJson<CircuitBreakerStatusResponse>("/api/v1/evallaps/circuit-breaker", { signal });
   },
 };

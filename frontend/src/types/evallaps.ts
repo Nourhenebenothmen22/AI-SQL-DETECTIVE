@@ -70,3 +70,33 @@ export interface TokenLedgerItem {
   latency_ms: number;
   recorded_at: string;
 }
+
+export interface QuarantinedKeyDetail {
+  key_id: string;
+  provider_name: string;
+  display_name: string;
+  reason: string;
+  ttl_remaining_seconds: number;
+  renewal_type: string;
+  renewal_window_label: string;
+  is_auto_renewable: boolean;
+  estimated_reset_seconds: number | null;
+  reset_target_label: string;
+}
+
+export interface HealthyKeyDetail {
+  key_id: string;
+  provider_name: string;
+  display_name: string;
+  renewal_type: string;
+}
+
+export interface CircuitBreakerStatusResponse {
+  quarantined: QuarantinedKeyDetail[];
+  healthy: HealthyKeyDetail[];
+  total_quarantined: number;
+  total_healthy: number;
+  all_healthy: boolean;
+  active_primary_provider: string;
+  fallback_chain: string[];
+}

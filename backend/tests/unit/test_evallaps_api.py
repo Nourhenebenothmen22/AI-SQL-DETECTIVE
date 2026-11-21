@@ -76,3 +76,54 @@ async def test_get_evallaps_renewals_catalog_endpoint(async_client: AsyncClient)
     groq_meta = next(item for item in data if item["provider_name"] == "groq")
     assert groq_meta["renewal_type"] == "sliding_window_1m"
     assert groq_meta["is_auto_renewable"] is True
+
+
+@pytest.mark.asyncio
+async def test_get_circuit_breaker_health_endpoint(async_client: AsyncClient) -> None:
+    """Verify GET /api/v1/evallaps/circuit-breaker returns 200 and valid health status."""
+    response = await async_client.get("/api/v1/evallaps/circuit-breaker")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "quarantined" in data
+    assert "healthy" in data
+    assert "total_quarantined" in data
+    assert "total_healthy" in data
+    assert "all_healthy" in data
+    assert "active_primary_provider" in data
+    assert "fallback_chain" in data
+    assert isinstance(data["quarantined"], list)
+    assert isinstance(data["healthy"], list)
+    assert isinstance(data["fallback_chain"], list)
+
+
+@pytest.mark.asyncio
+async def test_circuit_breaker_quarantine_simulation(async_client: AsyncClient) -> None:
+    """Verify Circuit Breaker quarantine is accurately reported with countdown and failover."""
+    from app.modules.ai.llm import global_llm_circuit_breaker
+
+    try:
+        # Simulate a 429 Rate Limit error on Groq
+        global_llm_circuit_breaker.record_failure(
+            provider="groq:mock",
+            reason="HTTP 429: Rate limit exceeded (TPM quota reached)",
+            ttl_seconds=45.0,
+        )
+
+        response = await async_client.get("/api/v1/evallaps/circuit-breaker")
+        assert response.status_code == 200
+        data = response.json()
+
+        assert data["total_quarantined"] >= 1
+        assert data["all_healthy"] is False
+
+        quarantined = next(item for item in data["quarantined"] if item["key_id"] == "groq:mock")
+        assert quarantined["provider_name"] == "groq"
+        assert quarantined["renewal_type"] == "sliding_window_1m"
+        assert quarantined["is_auto_renewable"] is True
+        assert quarantined["ttl_remaining_seconds"] > 0
+        assert quarantined["estimated_reset_seconds"] is not None
+        assert quarantined["estimated_reset_seconds"] <= 60
+        assert "Fenêtre 60s" in quarantined["reset_target_label"]
+    finally:
+        global_llm_circuit_breaker.clear("groq:mock")

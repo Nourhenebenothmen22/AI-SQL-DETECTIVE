@@ -161,6 +161,28 @@ class LLMCircuitBreaker:
                 del self._quarantine[p]
             return sorted(active)
 
+    def get_quarantine_details(self) -> list[dict[str, Any]]:
+        """Return detailed list of quarantined keys with remaining TTL and failure reason."""
+        with self._lock:
+            now = time.monotonic()
+            details: list[dict[str, Any]] = []
+            expired: list[str] = []
+            for p, (expiry, reason) in list(self._quarantine.items()):
+                remaining = expiry - now
+                if remaining > 0:
+                    details.append(
+                        {
+                            "key_id": p,
+                            "ttl_remaining_seconds": round(remaining, 1),
+                            "reason": reason,
+                        }
+                    )
+                else:
+                    expired.append(p)
+            for p in expired:
+                del self._quarantine[p]
+            return sorted(details, key=lambda d: d["ttl_remaining_seconds"])
+
     def clear(self, provider: str | None = None) -> None:
         """Clear quarantine for one or all providers."""
         with self._lock:

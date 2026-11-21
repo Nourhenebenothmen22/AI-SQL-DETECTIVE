@@ -79,3 +79,39 @@ class EvalLapsSummary(BaseModel):
     this_month_savings_usd: float = 0.0
     providers_count: int = 0
     top_provider: str | None = None
+
+
+class QuarantinedKeyDetail(BaseModel):
+    """Diagnostic detail for an individual token temporarily in Circuit Breaker quarantine."""
+
+    key_id: str
+    provider_name: str
+    display_name: str
+    reason: str
+    ttl_remaining_seconds: float
+    renewal_type: str
+    renewal_window_label: str
+    is_auto_renewable: bool
+    estimated_reset_seconds: int | None = None
+    reset_target_label: str
+
+
+class HealthyKeyDetail(BaseModel):
+    """Detail for an active, non-quarantined API token in the multi-provider pool."""
+
+    key_id: str
+    provider_name: str
+    display_name: str
+    renewal_type: str
+
+
+class CircuitBreakerStatusResponse(BaseModel):
+    """Real-time diagnostic health and quarantine state of the multi-provider LLM pool."""
+
+    quarantined: list[QuarantinedKeyDetail]
+    healthy: list[HealthyKeyDetail]
+    total_quarantined: int
+    total_healthy: int
+    all_healthy: bool
+    active_primary_provider: str
+    fallback_chain: list[str]

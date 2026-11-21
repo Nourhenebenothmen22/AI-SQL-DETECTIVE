@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Gauge, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
+import { CircuitBreakerHud } from "@/components/evallaps/circuit-breaker-hud";
 import { ProviderTable } from "@/components/evallaps/provider-table";
 import { StageChart } from "@/components/evallaps/stage-chart";
 import { SummaryCards } from "@/components/evallaps/summary-cards";
@@ -36,6 +37,12 @@ export default function EvalLapsPage() {
     queryFn: ({ signal }) => apiClient.getEvalLapsRenewals(signal),
   });
 
+  const cbQuery = useQuery({
+    queryKey: ["evallaps-circuit-breaker"],
+    queryFn: ({ signal }) => apiClient.getEvalLapsCircuitBreaker(signal),
+    refetchInterval: 5000,
+  });
+
   const isLoading =
     summaryQuery.isLoading ||
     providersQuery.isLoading ||
@@ -50,6 +57,7 @@ export default function EvalLapsPage() {
     void providersQuery.refetch();
     void stagesQuery.refetch();
     void renewalsQuery.refetch();
+    void cbQuery.refetch();
   };
 
   return (
@@ -146,10 +154,13 @@ export default function EvalLapsPage() {
           {/* 1. KPI Cards */}
           <SummaryCards summary={summaryQuery.data} />
 
-          {/* 2. Agent Stage Breakdown Chart */}
+          {/* 2. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
+          {cbQuery.data && <CircuitBreakerHud status={cbQuery.data} />}
+
+          {/* 3. Agent Stage Breakdown Chart */}
           <StageChart stages={stagesQuery.data ?? []} />
 
-          {/* 3. Provider Health & Renewal Diagnostics */}
+          {/* 4. Provider Health & Renewal Diagnostics */}
           <ProviderTable
             providers={providersQuery.data ?? []}
             catalog={renewalsQuery.data ?? []}
