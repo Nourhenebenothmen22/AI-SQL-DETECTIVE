@@ -15,11 +15,11 @@ import { formatCurrencyUsd, formatDurationMs, formatNumber } from "@/lib/format"
 import type { StageUsageSummary } from "@/types/evallaps";
 
 const CHART_COLORS = {
-  prompt: "#6366F1", // Indigo
-  completion: "#22D3EE", // Cyan
-  border: "#1E2B45",
-  axis: "#94A3B8",
-  card: "#131B2E",
+  prompt: "#38BDF8", // Sky Blue - High contrast & soothing
+  completion: "#34D399", // Mint Green - High contrast & comfortable
+  border: "#334155", // Slate-700
+  axis: "#94A3B8", // Slate-400
+  card: "#0F172A", // Slate-900
   text: "#F8FAFC",
 };
 
@@ -71,7 +71,7 @@ export function StageChart({ stages }: { stages: StageUsageSummary[] }) {
       <div className="mt-4 h-72 w-full">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 25 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#1E2B45" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.6} vertical={false} />
             <XAxis
               dataKey="name"
               stroke={CHART_COLORS.axis}
@@ -111,7 +111,7 @@ export function StageChart({ stages }: { stages: StageUsageSummary[] }) {
               wrapperStyle={{ fontSize: "11px", paddingBottom: "10px" }}
               formatter={(val) => (val === "prompt" ? "Prompt Tokens" : "Completion Tokens")}
             />
-            <Bar dataKey="prompt" fill={CHART_COLORS.prompt} radius={[4, 4, 0, 0]} stackId="tokens" />
+            <Bar dataKey="prompt" fill={CHART_COLORS.prompt} radius={[0, 0, 0, 0]} stackId="tokens" />
             <Bar dataKey="completion" fill={CHART_COLORS.completion} radius={[4, 4, 0, 0]} stackId="tokens" />
           </BarChart>
         </ResponsiveContainer>

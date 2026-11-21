@@ -35,47 +35,47 @@ export function LoadBalancerVisual({ distribution }: LoadBalancerVisualProps) {
       </div>
 
       {/* Next candidate highlight pill */}
-      <div className="my-3 flex items-center justify-between rounded-lg border border-accent-primary/30 bg-accent-primary/10 p-3">
+      <div className="my-3 flex items-center justify-between rounded-lg border border-sky-500/30 bg-sky-500/10 p-3">
         <div className="flex items-center gap-2">
-          <Zap className="h-4 w-4 text-accent-primary animate-pulse" aria-hidden="true" />
-          <span className="font-mono text-xs text-text-secondary">Prochaine Inférence :</span>
-          <span className="font-mono text-xs font-bold text-accent-primary">
+          <Zap className="h-4 w-4 text-sky-400 animate-pulse" aria-hidden="true" />
+          <span className="font-mono text-xs text-slate-300">Prochaine Inférence :</span>
+          <span className="font-mono text-xs font-bold text-sky-300">
             {distribution.next_dispatched_model}
           </span>
         </div>
-        <Badge variant="cyan" className="font-mono text-[10px]">
+        <Badge variant="cyan" className="font-mono text-[10px] border-sky-400/40 text-sky-300">
           {distribution.next_dispatched_provider.toUpperCase()}
         </Badge>
       </div>
 
       {/* Traffic Share Visual Bars */}
-      <div className="space-y-2.5 my-1">
+      <div className="space-y-3 my-1">
         {distribution.shares.slice(0, 5).map((share) => (
           <div key={`${share.provider_name}-${share.key_fingerprint}`} className="space-y-1">
             <div className="flex items-center justify-between font-mono text-[11px] tabular-nums">
               <div className="flex items-center gap-2">
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${
+                  className={`h-2 w-2 rounded-full ${
                     share.is_healthy ? "bg-emerald-400" : "bg-amber-400"
                   }`}
                 />
-                <span className="font-medium text-text-primary capitalize">{share.provider_name}</span>
-                <span className="text-text-secondary text-[10px]">{share.key_fingerprint}</span>
+                <span className="font-medium text-slate-200 capitalize">{share.provider_name}</span>
+                <span className="text-slate-400 text-[10px]">{share.key_fingerprint}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-text-secondary">{formatNumber(share.today_tokens)} toks</span>
-                <span className="font-bold text-accent-secondary w-10 text-right">
+                <span className="text-slate-400">{formatNumber(share.today_tokens)} toks</span>
+                <span className="font-bold text-sky-400 w-10 text-right">
                   {share.traffic_share_percentage}%
                 </span>
               </div>
             </div>
 
             {/* Visual Gauge Bar */}
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/50 p-[0.5px]">
               <div
                 className={`h-full rounded-full transition-all duration-500 ${
                   share.is_healthy
-                    ? "bg-gradient-to-r from-accent-primary to-accent-secondary"
+                    ? "bg-gradient-to-r from-sky-400 to-cyan-300"
                     : "bg-amber-400"
                 }`}
                 style={{ width: `${Math.max(2, share.traffic_share_percentage)}%` }}

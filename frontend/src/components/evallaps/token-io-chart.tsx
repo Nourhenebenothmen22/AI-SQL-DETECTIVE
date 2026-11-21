@@ -47,15 +47,15 @@ function CustomBarTooltip({ active, payload }: CustomTooltipProps) {
     <div className="rounded-lg border border-border-subtle bg-card p-3 shadow-xl font-mono text-xs">
       <p className="font-semibold text-text-primary">{data.model_label}</p>
       <div className="mt-2 space-y-1 text-[11px] tabular-nums">
-        <div className="flex items-center justify-between gap-4 text-accent-primary">
+        <div className="flex items-center justify-between gap-4 text-sky-400">
           <span>Prompt (Input) :</span>
           <span>{formatNumber(data.prompt_tokens)}</span>
         </div>
-        <div className="flex items-center justify-between gap-4 text-accent-secondary">
+        <div className="flex items-center justify-between gap-4 text-emerald-400">
           <span>Completion (Output) :</span>
           <span>{formatNumber(data.completion_tokens)}</span>
         </div>
-        <div className="flex items-center justify-between gap-4 border-t border-border-subtle/60 pt-1 font-bold text-text-primary">
+        <div className="flex items-center justify-between gap-4 border-t border-border-subtle/60 pt-1 font-bold text-white">
           <span>Total :</span>
           <span>{formatNumber(data.total_tokens)}</span>
         </div>
@@ -102,19 +102,19 @@ export function TokenIoChart({ models }: TokenIoChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E2B45" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.5} vertical={false} />
               <XAxis
                 dataKey="name"
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#1E2B45" }}
+                axisLine={{ stroke: "#334155" }}
               />
               <YAxis
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#1E2B45" }}
+                axisLine={{ stroke: "#334155" }}
                 tickFormatter={(val: number) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : String(val))}
               />
               <Tooltip content={<CustomBarTooltip />} />
@@ -123,8 +123,8 @@ export function TokenIoChart({ models }: TokenIoChartProps) {
                 iconType="circle"
                 iconSize={8}
               />
-              <Bar dataKey="prompt_tokens" name="Prompt Tokens" fill="#6366F1" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="completion_tokens" name="Completion Tokens" fill="#06B6D4" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="prompt_tokens" name="Prompt Tokens (Input)" fill="#38BDF8" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="completion_tokens" name="Completion Tokens (Output)" fill="#34D399" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         )}

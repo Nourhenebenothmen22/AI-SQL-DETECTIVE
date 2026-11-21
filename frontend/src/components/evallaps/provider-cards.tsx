@@ -66,14 +66,14 @@ export function ProviderCards({ providers, catalog }: ProviderCardsProps) {
           return (
             <div
               key={meta.provider_name}
-              className="flex flex-col justify-between rounded-lg border border-border-subtle bg-card p-4 transition-all hover:border-border-interactive/40 hover:bg-card-hover"
+              className="flex flex-col justify-between rounded-lg border border-slate-800 bg-card p-4 transition-all hover:border-sky-500/40 hover:bg-card-hover"
             >
               <div>
                 {/* Card Top */}
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-semibold text-text-primary">{meta.display_name}</h4>
-                    <span className="font-mono text-[10px] text-text-secondary uppercase">
+                    <h4 className="text-xs font-semibold text-slate-100">{meta.display_name}</h4>
+                    <span className="font-mono text-[10px] text-slate-400 uppercase">
                       {meta.provider_name}
                     </span>
                   </div>
@@ -83,15 +83,15 @@ export function ProviderCards({ providers, catalog }: ProviderCardsProps) {
                 {/* Tokens counter */}
                 <div className="mt-3">
                   <div className="flex items-baseline justify-between font-mono text-xs tabular-nums">
-                    <span className="font-bold text-accent-secondary">
+                    <span className="font-bold text-sky-400">
                       {formatNumber(totalTokens)}
                     </span>
-                    <span className="text-[10px] text-text-secondary">tokens</span>
+                    <span className="text-[10px] text-slate-400">tokens</span>
                   </div>
                   {/* Neon track */}
-                  <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-surface">
+                  <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/50 p-[0.5px]">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-accent-primary to-accent-secondary"
+                      className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300"
                       style={{ width: `${Math.min(100, Math.max(2, (totalTokens / 500000) * 100))}%` }}
                     />
                   </div>
@@ -99,7 +99,7 @@ export function ProviderCards({ providers, catalog }: ProviderCardsProps) {
               </div>
 
               {/* Micro-metrics bottom row */}
-              <div className="mt-4 flex items-center justify-between border-t border-border-subtle/50 pt-2 font-mono text-[10px] text-text-secondary tabular-nums">
+              <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-2 font-mono text-[10px] text-slate-400 tabular-nums">
                 <span className="flex items-center gap-1">
                   <Activity className="h-3 w-3 text-emerald-400" aria-hidden="true" />
                   {successCalls} reqs

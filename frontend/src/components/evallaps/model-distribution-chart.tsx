@@ -7,14 +7,14 @@ import { formatNumber } from "@/lib/format";
 import type { ModelUsageSummary } from "@/types/evallaps";
 
 const PALETTE = [
-  "#6366F1", // Indigo
-  "#06B6D4", // Cyan
-  "#10B981", // Emerald
-  "#F59E0B", // Amber
-  "#EC4899", // Pink
-  "#8B5CF6", // Purple
-  "#3B82F6", // Blue
-  "#14B8A6", // Teal
+  "#38BDF8", // Sky Blue
+  "#34D399", // Mint Green
+  "#FBBF24", // Warm Amber
+  "#A78BFA", // Soft Lavender
+  "#22D3EE", // Bright Cyan
+  "#FB7185", // Soft Rose
+  "#818CF8", // Bright Indigo
+  "#2DD4BF", // Soft Teal
 ];
 
 interface ModelDistributionChartProps {
@@ -45,11 +45,11 @@ function CustomDonutTooltip({ active, payload }: CustomTooltipProps) {
     <div className="rounded-lg border border-border-subtle bg-card p-3 shadow-xl font-mono text-xs">
       <p className="font-semibold text-text-primary">{data.model_name}</p>
       <p className="text-[11px] text-text-secondary uppercase">{data.provider_name}</p>
-      <div className="mt-2 flex items-center justify-between gap-4 border-t border-border-subtle/60 pt-1.5 tabular-nums">
-        <span className="text-text-secondary">Tokens :</span>
-        <span className="font-bold text-accent-secondary">{formatNumber(data.total_tokens)}</span>
+      <div className="mt-2 flex items-center justify-between gap-4 border-t border-slate-700/60 pt-1.5 tabular-nums">
+        <span className="text-slate-300">Tokens :</span>
+        <span className="font-bold text-sky-400">{formatNumber(data.total_tokens)}</span>
       </div>
-      <div className="flex items-center justify-between gap-4 text-emerald-400 tabular-nums">
+      <div className="flex items-center justify-between gap-4 text-emerald-300 tabular-nums">
         <span>Part du pool :</span>
         <span>{data.percentage.toFixed(1)}%</span>
       </div>
@@ -124,14 +124,14 @@ export function ModelDistributionChart({ models }: ModelDistributionChartProps) 
         {chartData.slice(0, 4).map((entry, index) => (
           <div
             key={entry.model_name}
-            className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface px-2.5 py-1 text-[11px] font-mono tabular-nums"
+            className="flex items-center gap-1.5 rounded-full border border-slate-700 bg-surface/80 px-2.5 py-1 text-[11px] font-mono tabular-nums"
           >
             <span
               className="h-2 w-2 rounded-full"
               style={{ backgroundColor: PALETTE[index % PALETTE.length] }}
             />
-            <span className="max-w-[120px] truncate text-text-primary">{entry.model_name}</span>
-            <span className="font-semibold text-accent-secondary">{entry.percentage.toFixed(0)}%</span>
+            <span className="max-w-[120px] truncate text-slate-200">{entry.model_name}</span>
+            <span className="font-semibold text-sky-400">{entry.percentage.toFixed(0)}%</span>
           </div>
         ))}
       </div>

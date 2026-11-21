@@ -3,7 +3,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
-  CheckCircle2,
   Clock,
   Gauge,
   Loader2,
@@ -37,12 +36,10 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
     overview.seconds_until_daily_reset
   );
 
-  // Sync remaining seconds when overview prop updates
   useEffect(() => {
     setRemainingSeconds(overview.seconds_until_daily_reset);
   }, [overview.seconds_until_daily_reset]);
 
-  // Client-side 1s countdown ticker for live modern platform experience
   useEffect(() => {
     const timer = setInterval(() => {
       setRemainingSeconds((prev) => (prev > 0 ? prev - 1 : 0));
@@ -62,22 +59,22 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
   });
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border-subtle bg-card p-5 shadow-lg before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-gradient-to-r before:from-accent-primary before:via-accent-secondary before:to-emerald-400">
+    <div className="relative overflow-hidden rounded-xl border border-slate-800 bg-card p-5 shadow-lg before:absolute before:inset-x-0 before:top-0 before:h-0.5 before:bg-gradient-to-r before:from-sky-400 before:via-cyan-400 before:to-emerald-400">
       {/* Top action & header row */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-primary/10 text-accent-primary">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/15 text-sky-400">
             <Gauge className="h-5 w-5" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold tracking-tight text-text-primary">
+              <h2 className="text-base font-semibold tracking-tight text-white">
                 Taux de Consommation &amp; Quotas
               </h2>
-              <Badge variant="cyan" className="border-accent-secondary/40 text-accent-secondary text-[10px] font-mono">
+              <Badge variant="cyan" className="border-sky-400/40 text-sky-300 text-[10px] font-mono">
                 Multi-Provider Pool
               </Badge>
-              <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-medium text-emerald-400 border border-emerald-500/20">
+              <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 font-mono text-[10px] font-medium text-emerald-300 border border-emerald-500/30">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Cycle Actif
               </span>
@@ -92,12 +89,12 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
             size="sm"
             onClick={() => resetMutation.mutate()}
             disabled={resetMutation.isPending}
-            className="gap-2 font-mono text-xs border-border-subtle hover:border-accent-primary hover:text-text-primary transition-all active:scale-[0.99]"
+            className="gap-2 font-mono text-xs border-slate-700 bg-surface/80 hover:bg-surface text-slate-200 hover:border-sky-400 hover:text-white transition-all active:scale-[0.99]"
           >
             {resetMutation.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-accent-primary" aria-hidden="true" />
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-400" aria-hidden="true" />
             ) : (
-              <RefreshCw className="h-3.5 w-3.5 text-accent-secondary" aria-hidden="true" />
+              <RefreshCw className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
             )}
             <span>{resetMutation.isPending ? "Resynchronisation..." : "Réinitialiser / Sync Cycle"}</span>
           </Button>
@@ -107,29 +104,29 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
       {/* 4-KPI Metric Grid */}
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Card 1: Consommation Aujourd'hui */}
-        <div className="rounded-lg border border-border-subtle bg-surface/60 p-4 transition-colors hover:border-border-interactive/40">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span className="font-mono text-[11px] uppercase tracking-wider">Tokens Aujourd&apos;hui</span>
-            <Zap className="h-4 w-4 text-accent-secondary" aria-hidden="true" />
+        <div className="rounded-lg border border-slate-800 bg-surface/70 p-4 transition-colors hover:border-sky-500/40">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-medium">Tokens Aujourd&apos;hui</span>
+            <Zap className="h-4 w-4 text-sky-400" aria-hidden="true" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-text-primary tabular-nums">
+            <span className="font-mono text-2xl font-bold tracking-tight text-white tabular-nums">
               {formatNumber(overview.today_tokens)}
             </span>
-            <span className="font-mono text-xs text-text-secondary tabular-nums">
+            <span className="font-mono text-xs text-slate-400 tabular-nums">
               / {formatNumber(overview.today_quota_tokens)}
             </span>
           </div>
 
           {/* Progress bar */}
           <div className="mt-3">
-            <div className="flex justify-between text-[11px] font-mono text-text-secondary">
+            <div className="flex justify-between text-[11px] font-mono text-slate-400">
               <span>Utilisation Jour</span>
-              <span className="text-accent-secondary tabular-nums">{overview.today_usage_percentage}%</span>
+              <span className="text-sky-300 font-semibold tabular-nums">{overview.today_usage_percentage}%</span>
             </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-canvas">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/60 p-[1px]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-accent-primary to-accent-secondary transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-sky-400 to-cyan-300 transition-all duration-500"
                 style={{ width: `${Math.min(100, overview.today_usage_percentage)}%` }}
               />
             </div>
@@ -137,29 +134,29 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
         </div>
 
         {/* Card 2: Consommation Ce Mois */}
-        <div className="rounded-lg border border-border-subtle bg-surface/60 p-4 transition-colors hover:border-border-interactive/40">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span className="font-mono text-[11px] uppercase tracking-wider">Tokens ce Mois</span>
-            <Activity className="h-4 w-4 text-accent-primary" aria-hidden="true" />
+        <div className="rounded-lg border border-slate-800 bg-surface/70 p-4 transition-colors hover:border-indigo-500/40">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-medium">Tokens ce Mois</span>
+            <Activity className="h-4 w-4 text-violet-400" aria-hidden="true" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-text-primary tabular-nums">
+            <span className="font-mono text-2xl font-bold tracking-tight text-white tabular-nums">
               {formatNumber(overview.month_tokens)}
             </span>
-            <span className="font-mono text-xs text-text-secondary tabular-nums">
+            <span className="font-mono text-xs text-slate-400 tabular-nums">
               / {formatNumber(overview.month_quota_tokens)}
             </span>
           </div>
 
           {/* Progress bar */}
           <div className="mt-3">
-            <div className="flex justify-between text-[11px] font-mono text-text-secondary">
+            <div className="flex justify-between text-[11px] font-mono text-slate-400">
               <span>Utilisation Mensuelle</span>
-              <span className="text-accent-primary tabular-nums">{overview.month_usage_percentage}%</span>
+              <span className="text-violet-300 font-semibold tabular-nums">{overview.month_usage_percentage}%</span>
             </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-canvas">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/60 p-[1px]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-indigo-300 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-violet-400 transition-all duration-500"
                 style={{ width: `${Math.min(100, overview.month_usage_percentage)}%` }}
               />
             </div>
@@ -167,70 +164,63 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
         </div>
 
         {/* Card 3: Tokens Restants */}
-        <div className="rounded-lg border border-border-subtle bg-surface/60 p-4 transition-colors hover:border-border-interactive/40">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span className="font-mono text-[11px] uppercase tracking-wider">Tokens Restants</span>
+        <div className="rounded-lg border border-slate-800 bg-surface/70 p-4 transition-colors hover:border-emerald-500/40">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-medium">Tokens Restants</span>
             <ShieldCheck className="h-4 w-4 text-emerald-400" aria-hidden="true" />
           </div>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
+            <span className="font-mono text-2xl font-bold tracking-tight text-emerald-300 tabular-nums">
               {formatNumber(overview.today_remaining_tokens)}
             </span>
-            <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 font-mono text-[10px] text-emerald-300 border border-emerald-500/20">
+            <span className="rounded bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-300 border border-emerald-500/30">
               Optimal
             </span>
           </div>
 
           {/* Health details */}
           <div className="mt-3">
-            <div className="flex justify-between text-[11px] font-mono text-text-secondary">
+            <div className="flex justify-between text-[11px] font-mono text-slate-400">
               <span>Marge de sécurité</span>
-              <span className="text-emerald-400 tabular-nums">
+              <span className="text-emerald-300 font-semibold tabular-nums">
                 {(100 - overview.today_usage_percentage).toFixed(1)}%
               </span>
             </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-canvas">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/60 p-[1px]">
               <div
-                className="h-full rounded-full bg-emerald-400 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-300 transition-all duration-500"
                 style={{ width: `${Math.max(0, 100 - overview.today_usage_percentage)}%` }}
               />
             </div>
           </div>
-          <p className="mt-2 flex items-center gap-1.5 text-[11px] text-text-secondary">
-            <CheckCircle2 className="h-3 w-3 text-emerald-400" aria-hidden="true" />
-            <span>
-              <strong className="text-text-primary font-mono">{overview.active_healthy_keys}</strong> sur{" "}
-              <strong className="text-text-primary font-mono">{overview.total_configured_keys}</strong> clés en ligne
-            </span>
-          </p>
         </div>
 
         {/* Card 4: Compte à Rebours de Réinitialisation */}
-        <div className="rounded-lg border border-border-subtle bg-surface/60 p-4 transition-colors hover:border-border-interactive/40">
-          <div className="flex items-center justify-between text-xs text-text-secondary">
-            <span className="font-mono text-[11px] uppercase tracking-wider">Réinitialisation</span>
+        <div className="rounded-lg border border-slate-800 bg-surface/70 p-4 transition-colors hover:border-amber-500/40">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-slate-300 font-medium">Réinitialisation</span>
             <Clock className="h-4 w-4 text-amber-400 animate-pulse" aria-hidden="true" />
           </div>
           <div className="mt-2">
-            <span className="font-mono text-2xl font-bold tracking-tight text-amber-400 tabular-nums">
+            <span className="font-mono text-2xl font-bold tracking-tight text-amber-300 tabular-nums">
               {formatCountdown(remainingSeconds)}
             </span>
           </div>
 
           {/* Cycle progression */}
           <div className="mt-3">
-            <div className="flex justify-between text-[11px] font-mono text-text-secondary">
+            <div className="flex justify-between text-[11px] font-mono text-slate-400">
               <span>Cycle Quotidien</span>
-              <span className="text-amber-400 tabular-nums">{overview.daily_cycle_percentage_elapsed}%</span>
+              <span className="text-amber-300 font-semibold tabular-nums">{overview.daily_cycle_percentage_elapsed}%</span>
             </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-canvas">
+            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-slate-800/90 border border-slate-700/60 p-[1px]">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-300 transition-all duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-amber-400 to-yellow-300 transition-all duration-500"
                 style={{ width: `${overview.daily_cycle_percentage_elapsed}%` }}
               />
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-text-secondary font-mono">
+          <p className="mt-2 text-[11px] text-slate-400 font-mono">
             Reset quotidien 00:00 UTC
           </p>
         </div>

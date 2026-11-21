@@ -47,22 +47,22 @@ function BurnChartTooltip({ active, payload }: CustomTooltipProps) {
       <p className="font-mono text-xs font-semibold text-text-primary">{data.label}</p>
       <div className="mt-2 space-y-1 font-mono text-[11px] tabular-nums">
         <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5 text-text-secondary">
-            <span className="h-2 w-2 rounded-full bg-accent-primary" />
+          <span className="flex items-center gap-1.5 text-slate-300">
+            <span className="h-2 w-2 rounded-full bg-sky-400" />
             Prompt Tokens :
           </span>
-          <span className="font-medium text-text-primary">{formatNumber(data.prompt_tokens)}</span>
+          <span className="font-medium text-white">{formatNumber(data.prompt_tokens)}</span>
         </div>
         <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-1.5 text-text-secondary">
-            <span className="h-2 w-2 rounded-full bg-accent-secondary" />
+          <span className="flex items-center gap-1.5 text-slate-300">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
             Completion Tokens :
           </span>
-          <span className="font-medium text-text-primary">{formatNumber(data.completion_tokens)}</span>
+          <span className="font-medium text-white">{formatNumber(data.completion_tokens)}</span>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-border-subtle/60 pt-1">
-          <span className="text-text-secondary font-semibold">Total :</span>
-          <span className="font-bold text-accent-secondary">{formatNumber(data.total_tokens)}</span>
+          <span className="text-slate-300 font-semibold">Total :</span>
+          <span className="font-bold text-sky-400">{formatNumber(data.total_tokens)}</span>
         </div>
         <div className="flex items-center justify-between gap-4 text-emerald-400">
           <span>Économies USD :</span>
@@ -155,28 +155,28 @@ export function TokenBurnChart() {
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={points} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="indigoGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                  <stop offset="95%" stopColor="#6366F1" stopOpacity={0.0} />
+                <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#38BDF8" stopOpacity={0.0} />
                 </linearGradient>
-                <linearGradient id="cyanGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#06B6D4" stopOpacity={0.5} />
-                  <stop offset="95%" stopColor="#06B6D4" stopOpacity={0.0} />
+                <linearGradient id="mintGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#34D399" stopOpacity={0.55} />
+                  <stop offset="95%" stopColor="#34D399" stopOpacity={0.0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1E2B45" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" strokeOpacity={0.5} vertical={false} />
               <XAxis
                 dataKey="label"
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#1E2B45" }}
+                axisLine={{ stroke: "#334155" }}
               />
               <YAxis
-                stroke="#64748B"
+                stroke="#94A3B8"
                 fontSize={11}
                 tickLine={false}
-                axisLine={{ stroke: "#1E2B45" }}
+                axisLine={{ stroke: "#334155" }}
                 tickFormatter={(val: number) => (val >= 1000 ? `${(val / 1000).toFixed(0)}k` : String(val))}
               />
               <Tooltip content={<BurnChartTooltip />} />
@@ -184,19 +184,19 @@ export function TokenBurnChart() {
                 type="monotone"
                 dataKey="prompt_tokens"
                 name="Prompt Tokens"
-                stroke="#6366F1"
-                strokeWidth={2}
+                stroke="#38BDF8"
+                strokeWidth={2.5}
                 fillOpacity={1}
-                fill="url(#indigoGradient)"
+                fill="url(#skyGradient)"
               />
               <Area
                 type="monotone"
                 dataKey="completion_tokens"
                 name="Completion Tokens"
-                stroke="#06B6D4"
-                strokeWidth={2}
+                stroke="#34D399"
+                strokeWidth={2.5}
                 fillOpacity={1}
-                fill="url(#cyanGradient)"
+                fill="url(#mintGradient)"
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -207,12 +207,12 @@ export function TokenBurnChart() {
       <div className="mt-3 flex items-center justify-between border-t border-border-subtle/50 pt-3 text-[11px] font-mono text-text-secondary">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-accent-primary" />
-            <span>Prompt Tokens (Entrée)</span>
+            <span className="h-2 w-2 rounded-full bg-sky-400" />
+            <span className="text-slate-300">Prompt Tokens (Entrée)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-accent-secondary" />
-            <span>Completion Tokens (Génération IA)</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span className="text-slate-300">Completion Tokens (Génération IA)</span>
           </div>
         </div>
         <span>Données synchronisées en direct avec PostgreSQL</span>

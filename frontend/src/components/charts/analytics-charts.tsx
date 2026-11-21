@@ -22,15 +22,15 @@ import { formatBytes, formatNumber } from "@/lib/format";
 import type { AnalyticsDashboardResponse } from "@/types/api";
 
 const COLORS = {
-  indigo: "#6366F1",
-  cyan: "#06B6D4",
+  indigo: "#38BDF8", // Calming Sky Blue for high contrast & zero eye strain
+  cyan: "#34D399", // Fresh Mint Green
   cyanAccent: "#22D3EE",
   emerald: "#10B981",
-  amber: "#F59E0B",
-  rose: "#F43F5E",
-  border: "#1E2B45",
+  amber: "#FBBF24",
+  rose: "#FB7185",
+  border: "#334155", // Slate-700 for clearly visible, comfortable grid lines
   axis: "#94A3B8",
-  card: "#131B2E",
+  card: "#0F172A", // Slate-900
   surface: "#0D121F",
   text: "#F8FAFC",
 } as const;
