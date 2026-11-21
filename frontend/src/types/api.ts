@@ -421,29 +421,3 @@ export interface EvalRunRequest {
   difficulty?: "easy" | "medium" | "hard";
   mock_run?: boolean;
 }
-
-export interface ScenarioGenerateRequest {
-  scenario_prompt: string;
-  connection_id?: string | null;
-}
-
-export interface ScenarioImpactSummary {
-  orders_inserted: number;
-  order_items_inserted: number;
-  inventory_updated: number;
-  reviews_inserted: number;
-}
-
-export interface ScenarioGenerateResponse {
-  scenario_title: string;
-  scenario_summary: string;
-  business_rationale: string;
-  suggested_workbench_question: string;
-  impact: ScenarioImpactSummary;
-}
-
-export interface ScenarioResetResponse {
-  status: "reset_complete";
-  message: string;
-  baseline_counts: Record<string, number>;
-}

@@ -10,9 +10,6 @@ import type {
   HealthResponse,
   QueryRunHistoryDetail,
   QueryRunHistoryResponse,
-  ScenarioGenerateRequest,
-  ScenarioGenerateResponse,
-  ScenarioResetResponse,
   SchemaIntrospectionResponse,
   SseErrorEvent,
   SseOptimizationCompletedEvent,
@@ -300,19 +297,6 @@ export const apiClient = {
     return requestJson<EvalRunResponse>("/api/v1/evals/run", {
       method: "POST",
       body: JSON.stringify(payload),
-    });
-  },
-
-  generateScenario(payload: ScenarioGenerateRequest): Promise<ScenarioGenerateResponse> {
-    return requestJson<ScenarioGenerateResponse>("/api/v1/scenarios/generate", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
-
-  resetDatabaseScenario(): Promise<ScenarioResetResponse> {
-    return requestJson<ScenarioResetResponse>("/api/v1/scenarios/reset", {
-      method: "POST",
     });
   },
 

@@ -13,7 +13,7 @@
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Next.js-15.5-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js 15" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript Strict" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/TailwindCSS-v4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
-  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-132_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 132 Passed" /></a>
+  <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Pytest-130_Passed-success?style=flat-square&logo=pytest&logoColor=white" alt="Pytest 130 Passed" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/Playwright-6_E2E_Verified-2EAD33?style=flat-square&logo=playwright&logoColor=white" alt="Playwright Verified" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/LLM-100%25_Free--Tier-06B6D4?style=flat-square&logo=lightning&logoColor=white" alt="100% Free-Tier" /></a>
   <a href="#-badges--technologies"><img src="https://img.shields.io/badge/EvalLaps-LLMOps_%26_FinOps-6366F1?style=flat-square&logo=speedtest&logoColor=white" alt="EvalLaps LLMOps & FinOps" /></a>
@@ -301,7 +301,6 @@ AI SQL Detective propose une interface DevTools haut de gamme (style Linear, Sup
 | **FinOps Live Badge (Workbench)** | Badge visuel sous les résultats SQL indiquant le fournisseur utilisé, les tokens consommés sur la requête et les économies nettes générées. |
 | **Analytics Dashboard (Recharts)** | Tableaux de bord graphiques modernisés intégrant les 5 visualisations réelles : tendances de latence, donut des statuts, activité dans le temps, comparaisons et métriques des tables. |
 | **Audit & History Log** | Consultation des exécutions passées paginées, filtrage par statut et bouton de rechargement direct dans le Workbench via le paramètre d'URL `?runId=`. |
-| **AI What-If Scenario Sandbox** | Simulateur de conditions de marché par IA (Black Friday, Churn VIP, Ruptures de stock) avec injection relationnelle atomique (PK/FK cohérentes) et réinitialisation instantanée au seed doré de baseline. |
 
 ---
 
@@ -321,8 +320,6 @@ Tous les endpoints sont fortement typés avec Pydantic v2 et documentés via Ope
 | `GET` | `/api/v1/history` | `?limit=&offset=&status=` | `QueryRunHistoryResponse` | Historique paginé des exécutions enregistrées dans `app_meta.query_runs`. |
 | `GET` | `/api/v1/history/{run_id}` | *-* | `QueryRunHistoryDetail` | Détail d'une exécution pour rechargement complet dans le Workbench. |
 | `GET` | `/api/v1/analytics` | `?connection_id=` | `AnalyticsDashboardResponse` | Agrégations télémétriques et statistiques de taille/lignes des tables PostgreSQL. |
-| `POST` | `/api/v1/scenarios/generate` | `ScenarioGenerateRequest` | `ScenarioGenerateResponse` | Simulation en langage naturel de scénarios synthétiques avec insertion atomique. |
-| `POST` | `/api/v1/scenarios/reset` | *-* | `ScenarioResetResponse` | Réinitialisation instantanée de la base au seed déterministe de référence. |
 | `GET` | `/api/v1/evallaps/summary` | `?window_days=` | `EvalLapsSummaryResponse` | Synthèse FinOps : tokens consommés, requêtes 200 OK et économies cumulées en USD. |
 | `GET` | `/api/v1/evallaps/providers` | `?window_days=` | `ProviderUsageResponse` | Consommation granulaire par fournisseur avec empreintes de clés anonymisées. |
 | `GET` | `/api/v1/evallaps/stages` | `?window_days=` | `StageUsageResponse` | Répartition de la consommation de jetons (Prompt vs Completion) par agent. |
@@ -471,7 +468,7 @@ cd backend
 uv run ruff check .
 uv run ruff format --check .
 
-# 2. Exécution de la suite de tests Pytest (132 tests unitaires, EvalLaps, Circuit Breaker & intégration PG16)
+# 2. Exécution de la suite de tests Pytest (130 tests unitaires, EvalLaps, Circuit Breaker & intégration PG16)
 uv run pytest -v
 
 # 3. Contrôle du typage strict TypeScript et linting frontend
@@ -527,7 +524,7 @@ AI SQL DETECTIVE
 │
 └── Infrastructure & Tests
     ├── Docker & Docker Compose    # Environnement de développement et production
-    ├── Pytest & HTTPX             # 132 tests automatisés (100% verts)
+    ├── Pytest & HTTPX             # 130 tests automatisés (100% verts)
     ├── Playwright                 # Tests End-to-End multi-navigateurs
     └── GitHub Actions             # Intégration continue automatisée
 ```

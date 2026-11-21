@@ -6,7 +6,6 @@ import {
   Gauge,
   History,
   Menu,
-  Sparkles,
   TerminalSquare,
   X,
 } from "lucide-react";
@@ -25,7 +24,6 @@ const NAV_ITEMS = [
   { href: "/analytics", label: "Analytics", icon: Activity },
   { href: "/evals", label: "EvalOps", icon: FlaskConical },
   { href: "/evallaps", label: "EvalLaps", icon: Gauge },
-  { href: "/sandbox", label: "Sandbox", icon: Sparkles },
   { href: "/history", label: "History", icon: History },
 ] as const;
 

@@ -7,7 +7,6 @@ from app.api.v1.evals import router as evals_router
 from app.api.v1.health import router as health_router
 from app.api.v1.history import router as history_router
 from app.api.v1.queries import router as queries_router
-from app.api.v1.scenarios import router as scenarios_router
 from app.api.v1.schema import router as schema_router
 
 api_v1_router = APIRouter(prefix="/api/v1")
@@ -19,4 +18,3 @@ api_v1_router.include_router(history_router)
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(evals_router)
 api_v1_router.include_router(evallaps_router)
-api_v1_router.include_router(scenarios_router)

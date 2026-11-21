@@ -5,6 +5,8 @@
   color-scheme: dark;
 
   /* Tier 1: Literal Obsidian Dark Palette (.agent/roles.md) */
+  --font-inter: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-jetbrains-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --palette-obsidian-deep: #070a12;
   --palette-slate-surface: #0d121f;
   --palette-card-navy: #131b2e;

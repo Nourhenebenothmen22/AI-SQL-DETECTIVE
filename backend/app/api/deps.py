@@ -8,7 +8,6 @@ from app.modules.evallaps import EvalLapsRepository, EvalLapsService
 from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
-from app.modules.scenarios.service import ScenarioGeneratorService
 from app.modules.security.gate import SecurityGate
 
 
@@ -45,15 +44,6 @@ def get_workflow_service(request: Request) -> DetectiveWorkflowService:
 def get_eval_service(request: Request) -> EvalOpsService:
     """Provide the EvalOps benchmarking and golden test suite service."""
     return request.app.state.eval_service
-
-
-def get_scenario_service(request: Request) -> ScenarioGeneratorService:
-    """Provide the AI what-if scenario generator and sandbox service."""
-    if not hasattr(request.app.state, "scenario_service"):
-        request.app.state.scenario_service = ScenarioGeneratorService(
-            settings=request.app.state.settings
-        )
-    return request.app.state.scenario_service
 
 
 def get_token_ledger_repository(request: Request) -> EvalLapsRepository:
