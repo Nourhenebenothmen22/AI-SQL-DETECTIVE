@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, Gauge, ShieldCheck, TableProperties } from "lucide-react";
+import { BookOpen, Coins, Gauge, ShieldCheck, TableProperties } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -23,6 +23,7 @@ import {
 import { ResultsTable } from "@/components/workbench/results-table";
 import { SqlEditor } from "@/components/workbench/sql-editor";
 import { apiClient, ApiClientError } from "@/lib/api-client";
+import { formatCurrencyUsd, formatNumber } from "@/lib/format";
 import type {
   AskQueryResponse,
   ExecuteSQLResponse,
@@ -69,6 +70,8 @@ interface WorkbenchResultState {
   planSummary: PlanSummaryResponse | null;
   optimizations: OptimizationRecommendationResponse[];
   warnings: string[];
+  totalTokens: number | null;
+  estimatedSavingsUsd: number | null;
 }
 
 const EMPTY_RESULT: WorkbenchResultState = {
@@ -96,6 +99,8 @@ const EMPTY_RESULT: WorkbenchResultState = {
   planSummary: null,
   optimizations: [],
   warnings: [],
+  totalTokens: null,
+  estimatedSavingsUsd: null,
 };
 
 function resetSixStages(): StageProgressState[] {
@@ -296,6 +301,8 @@ export function WorkbenchView() {
       planSummary: final.plan_summary,
       optimizations: final.optimizations,
       warnings: final.warnings,
+      totalTokens: final.total_tokens ?? null,
+      estimatedSavingsUsd: final.estimated_savings_usd ?? null,
     });
     setOptimizationState((prev) => ({
       status: final.optimization_status,
@@ -493,6 +500,17 @@ export function WorkbenchView() {
                   ) : null}
                 </TabsTrigger>
               </TabsList>
+
+              {result.totalTokens && result.totalTokens > 0 ? (
+                <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-mono text-[11px] text-emerald-300">
+                  <Coins className="h-3.5 w-3.5 text-emerald-400" aria-hidden="true" />
+                  <span>{formatNumber(result.totalTokens)} tokens</span>
+                  <span className="text-emerald-500/60">·</span>
+                  <span className="font-semibold text-emerald-400">
+                    +{formatCurrencyUsd(result.estimatedSavingsUsd)} économisés
+                  </span>
+                </div>
+              ) : null}
             </div>
 
             <TabsContent value="results">

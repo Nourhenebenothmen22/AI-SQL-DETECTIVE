@@ -22,6 +22,19 @@ export function formatNumber(value: number | null | undefined): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+export function formatCurrencyUsd(amount: number | null | undefined): string {
+  if (amount === null || amount === undefined || !Number.isFinite(amount)) return "$0.00";
+  if (amount < 0.01 && amount > 0) {
+    return `$${amount.toFixed(4)}`;
+  }
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(amount);
+}
+
 export function formatTimestamp(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;

@@ -219,6 +219,8 @@ export interface AskQueryResponse {
   optimizations: OptimizationRecommendationResponse[];
   warnings: string[];
   stages: StageStatusResponse[];
+  total_tokens?: number;
+  estimated_savings_usd?: number;
 }
 
 export interface SseStageStartedEvent {

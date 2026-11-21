@@ -23,6 +23,13 @@ import type {
   SseStageStartedEvent,
   ValidateSQLResponse,
 } from "@/types/api";
+import type {
+  EvalLapsSummary,
+  ProviderRenewalMeta,
+  ProviderUsageSummary,
+  StageUsageSummary,
+  TokenLedgerItem,
+} from "@/types/evallaps";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "") ?? "http://localhost:8000";
@@ -306,5 +313,25 @@ export const apiClient = {
     return requestJson<ScenarioResetResponse>("/api/v1/scenarios/reset", {
       method: "POST",
     });
+  },
+
+  getEvalLapsSummary(windowDays = 30, signal?: AbortSignal): Promise<EvalLapsSummary> {
+    return requestJson<EvalLapsSummary>(`/api/v1/evallaps/summary?window_days=${windowDays}`, { signal });
+  },
+
+  getEvalLapsProviders(windowDays = 30, signal?: AbortSignal): Promise<ProviderUsageSummary[]> {
+    return requestJson<ProviderUsageSummary[]>(`/api/v1/evallaps/providers?window_days=${windowDays}`, { signal });
+  },
+
+  getEvalLapsStages(windowDays = 30, signal?: AbortSignal): Promise<StageUsageSummary[]> {
+    return requestJson<StageUsageSummary[]>(`/api/v1/evallaps/stages?window_days=${windowDays}`, { signal });
+  },
+
+  getEvalLapsRunTokens(runId: string, signal?: AbortSignal): Promise<TokenLedgerItem[]> {
+    return requestJson<TokenLedgerItem[]>(`/api/v1/evallaps/runs/${runId}`, { signal });
+  },
+
+  getEvalLapsRenewals(signal?: AbortSignal): Promise<ProviderRenewalMeta[]> {
+    return requestJson<ProviderRenewalMeta[]>("/api/v1/evallaps/renewals", { signal });
   },
 };
