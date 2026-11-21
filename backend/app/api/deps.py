@@ -4,6 +4,7 @@ from app.core.config import Settings
 from app.core.context import RequestContext, get_request_context
 from app.modules.ai.service import DetectiveWorkflowService
 from app.modules.connections.registry import ConnectionRegistry
+from app.modules.evallaps import EvalLapsRepository, EvalLapsService
 from app.modules.evals.service import EvalOpsService
 from app.modules.execution.executor import SQLExecutor
 from app.modules.history.repository import QueryRunRepository
@@ -53,6 +54,24 @@ def get_scenario_service(request: Request) -> ScenarioGeneratorService:
             settings=request.app.state.settings
         )
     return request.app.state.scenario_service
+
+
+def get_token_ledger_repository(request: Request) -> EvalLapsRepository:
+    """Provide the app_meta LLM token ledger repository."""
+    if not hasattr(request.app.state, "token_ledger_repository"):
+        request.app.state.token_ledger_repository = EvalLapsRepository(request.app.state.settings)
+    return request.app.state.token_ledger_repository
+
+
+def get_evallaps_service(request: Request) -> EvalLapsService:
+    """Provide the EvalLaps LLMOps & FinOps observability service."""
+    if not hasattr(request.app.state, "evallaps_service"):
+        repo = get_token_ledger_repository(request)
+        request.app.state.evallaps_service = EvalLapsService(
+            repository=repo,
+            settings=request.app.state.settings,
+        )
+    return request.app.state.evallaps_service
 
 
 def get_current_context(

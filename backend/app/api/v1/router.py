@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.connections import router as connections_router
+from app.api.v1.evallaps import router as evallaps_router
 from app.api.v1.evals import router as evals_router
 from app.api.v1.health import router as health_router
 from app.api.v1.history import router as history_router
@@ -17,4 +18,5 @@ api_v1_router.include_router(queries_router)
 api_v1_router.include_router(history_router)
 api_v1_router.include_router(analytics_router)
 api_v1_router.include_router(evals_router)
+api_v1_router.include_router(evallaps_router)
 api_v1_router.include_router(scenarios_router)
