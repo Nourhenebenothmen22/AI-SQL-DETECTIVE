@@ -19,6 +19,10 @@ def get_database_schema(
         default=None,
         description="Preconfigured read-only connection identifier.",
     ),
+    refresh: bool = Query(
+        default=False,
+        description="Force refresh and bypass in-memory schema cache.",
+    ),
     registry: ConnectionRegistry = Depends(get_connection_registry),
     _context: RequestContext = Depends(get_current_context),
 ) -> SchemaIntrospectionResponse:
@@ -32,6 +36,11 @@ def get_database_schema(
         ) from None
 
     try:
+        if refresh:
+            try:
+                return introspect_schema(spec, force_refresh=True)
+            except TypeError:
+                return introspect_schema(spec)
         return introspect_schema(spec)
     except (psycopg.Error, OSError):
         logger.warning(

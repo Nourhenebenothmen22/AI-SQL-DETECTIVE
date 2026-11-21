@@ -9,6 +9,7 @@ from sqlalchemy import create_engine, select, text, update
 
 from app.core.config import Settings
 from app.modules.ai.llm import build_chat_model
+from app.modules.database.introspector import clear_schema_cache
 from app.modules.database.models.ecommerce import (
     Customer,
     Inventory,
@@ -234,6 +235,7 @@ class ScenarioGeneratorService:
             self._settings.database_migrator_url.get_secret_value(),
             force=True,
         )
+        clear_schema_cache()
         return ScenarioResetResponse(
             message="Database successfully reset to deterministic golden baseline.",
             baseline_counts=counts,

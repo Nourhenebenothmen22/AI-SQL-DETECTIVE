@@ -43,6 +43,8 @@ def build_detective_graph(
     hard_max_rows: int,
     lock_timeout_ms: int,
     llm_timeout_seconds: int,
+    settings: Any = None,
+    llm_factory: Any = None,
 ) -> Any:
     """Compile the 7-agent AI SQL Detective LangGraph StateGraph."""
     nodes = DetectiveNodes(
@@ -53,6 +55,8 @@ def build_detective_graph(
         hard_max_rows=hard_max_rows,
         lock_timeout_ms=lock_timeout_ms,
         llm_timeout_seconds=llm_timeout_seconds,
+        settings=settings,
+        llm_factory=llm_factory,
     )
 
     builder: StateGraph[DetectiveState] = StateGraph(DetectiveState)

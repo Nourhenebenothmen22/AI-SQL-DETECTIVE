@@ -1,3 +1,7 @@
+import threading
+import time
+from dataclasses import dataclass
+
 import psycopg
 from psycopg.rows import dict_row
 
@@ -100,9 +104,48 @@ ORDER BY n.nspname, t.relname, i.relname;
 """
 
 
-def introspect_schema(spec: DatabaseConnectionSpec) -> SchemaIntrospectionResponse:
-    """Introspect target schemas via the dedicated read-only PostgreSQL connection."""
+@dataclass(frozen=True, slots=True)
+class _SchemaCacheEntry:
+    response: SchemaIntrospectionResponse
+    expires_at: float
+
+
+_SCHEMA_CACHE: dict[str, _SchemaCacheEntry] = {}
+_SCHEMA_CACHE_LOCK = threading.Lock()
+DEFAULT_SCHEMA_CACHE_TTL_SECONDS: float = 600.0  # 10 minutes
+
+
+def clear_schema_cache(connection_id: str | None = None) -> None:
+    """Clear cached schema introspection metadata."""
+    with _SCHEMA_CACHE_LOCK:
+        if connection_id is not None:
+            prefix = f"{connection_id}::"
+            keys_to_remove = [
+                k for k in _SCHEMA_CACHE if k.startswith(prefix) or k == connection_id
+            ]
+            for k in keys_to_remove:
+                del _SCHEMA_CACHE[k]
+        else:
+            _SCHEMA_CACHE.clear()
+
+
+def introspect_schema(
+    spec: DatabaseConnectionSpec,
+    *,
+    force_refresh: bool = False,
+    cache_ttl_seconds: float = DEFAULT_SCHEMA_CACHE_TTL_SECONDS,
+) -> SchemaIntrospectionResponse:
+    """Introspect target schemas via read-only PostgreSQL connection with in-memory caching."""
     schemas = list(spec.target_schemas)
+    cache_key = f"{spec.id}::{','.join(sorted(schemas))}"
+
+    if not force_refresh:
+        now = time.monotonic()
+        with _SCHEMA_CACHE_LOCK:
+            entry = _SCHEMA_CACHE.get(cache_key)
+            if entry is not None and now < entry.expires_at:
+                return entry.response
+
     dsn = to_psycopg_dsn(spec.dsn.get_secret_value())
 
     with psycopg.connect(dsn, connect_timeout=5, row_factory=dict_row) as conn:
@@ -198,7 +241,7 @@ def introspect_schema(spec: DatabaseConnectionSpec) -> SchemaIntrospectionRespon
         for row in table_rows
     ]
 
-    return SchemaIntrospectionResponse(
+    response = SchemaIntrospectionResponse(
         connection_id=spec.id,
         dialect="postgresql",
         read_only=spec.read_only,
@@ -206,6 +249,14 @@ def introspect_schema(spec: DatabaseConnectionSpec) -> SchemaIntrospectionRespon
         table_count=len(tables),
         tables=tables,
     )
+
+    with _SCHEMA_CACHE_LOCK:
+        _SCHEMA_CACHE[cache_key] = _SchemaCacheEntry(
+            response=response,
+            expires_at=time.monotonic() + max(0.001, cache_ttl_seconds),
+        )
+
+    return response
 
 
 def format_compact_schema_prompt(schema: SchemaIntrospectionResponse) -> str:

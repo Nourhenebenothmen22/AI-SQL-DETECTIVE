@@ -8,6 +8,7 @@ export interface HealthResponse {
   llm_configured: boolean;
   llm_providers_armed?: string[];
   llm_fallback_active?: boolean;
+  llm_quarantined_providers?: string[];
 }
 
 export interface ConnectionSummary {

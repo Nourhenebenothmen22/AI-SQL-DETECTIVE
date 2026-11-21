@@ -136,6 +136,8 @@ class DetectiveWorkflowService:
             hard_max_rows=self._settings.sql_hard_max_rows,
             lock_timeout_ms=self._settings.sql_lock_timeout_ms,
             llm_timeout_seconds=self._settings.llm_timeout_seconds,
+            settings=self._settings,
+            llm_factory=self._llm_factory,
         )
 
         initial_state: DetectiveState = {

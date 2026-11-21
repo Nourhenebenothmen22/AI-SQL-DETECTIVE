@@ -125,6 +125,8 @@ class DetectiveNodes:
         hard_max_rows: int,
         lock_timeout_ms: int,
         llm_timeout_seconds: int,
+        settings: Any = None,
+        llm_factory: Callable[..., BaseChatModel] | None = None,
     ) -> None:
         self._llm = llm
         self._gate = security_gate
@@ -133,6 +135,14 @@ class DetectiveNodes:
         self._hard_max_rows = hard_max_rows
         self._lock_timeout_ms = lock_timeout_ms
         self._llm_timeout_seconds = llm_timeout_seconds
+        self._settings = settings
+        self._llm_factory = llm_factory
+
+    def _get_active_llm(self) -> BaseChatModel:
+        """Dynamically resolve active LLM, prioritizing non-quarantined providers."""
+        if self._settings is not None and self._llm_factory is not None:
+            return self._llm_factory(self._settings)
+        return self._llm
 
     async def schema_analyst(
         self,
@@ -158,7 +168,7 @@ class DetectiveNodes:
             f"Introspected PostgreSQL catalog:\n{state['schema_prompt']}"
         )
         output = await _invoke_structured(
-            self._llm,
+            self._get_active_llm(),
             SchemaAnalysisOutput,
             SCHEMA_ANALYST_SYSTEM_PROMPT,
             prompt,
@@ -253,7 +263,7 @@ class DetectiveNodes:
             )
 
         output = await _invoke_structured(
-            self._llm,
+            self._get_active_llm(),
             SQLGenerationOutput,
             SQL_GENERATOR_SYSTEM_PROMPT,
             "\n\n".join(parts),
@@ -323,7 +333,7 @@ class DetectiveNodes:
             f"Introspected PostgreSQL catalog:\n{state['schema_prompt']}"
         )
         output = await _invoke_structured(
-            self._llm,
+            self._get_active_llm(),
             QueryReviewOutput,
             QUERY_REVIEWER_SYSTEM_PROMPT,
             prompt,
@@ -683,7 +693,7 @@ class DetectiveNodes:
 
         try:
             output = await _invoke_structured(
-                self._llm,
+                self._get_active_llm(),
                 ResultExplanationOutput,
                 RESULT_EXPLAINER_SYSTEM_PROMPT,
                 prompt,
@@ -803,7 +813,7 @@ class DetectiveNodes:
         opt_timeout = min(self._llm_timeout_seconds, 12)
         try:
             output = await _invoke_structured(
-                self._llm,
+                self._get_active_llm(),
                 OptimizationSynthesisOutput,
                 OPTIMIZATION_AGENT_SYSTEM_PROMPT,
                 prompt,
