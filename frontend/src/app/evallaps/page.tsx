@@ -6,7 +6,6 @@ import { useState } from "react";
 
 import { LoadBalancerVisual } from "@/components/evallaps/load-balancer-visual";
 import { ModelDistributionChart } from "@/components/evallaps/model-distribution-chart";
-import { ProviderCards } from "@/components/evallaps/provider-cards";
 import { QuotaHero } from "@/components/evallaps/quota-hero";
 import { StageChart } from "@/components/evallaps/stage-chart";
 import { TokenBurnChart } from "@/components/evallaps/token-burn-chart";
@@ -20,29 +19,9 @@ const WINDOW_OPTIONS = [7, 14, 30, 90] as const;
 export default function EvalLapsPage() {
   const [days, setDays] = useState<number>(30);
 
-  const summaryQuery = useQuery({
-    queryKey: ["evallaps-summary", days],
-    queryFn: ({ signal }) => apiClient.getEvalLapsSummary(days, signal),
-  });
-
-  const providersQuery = useQuery({
-    queryKey: ["evallaps-providers", days],
-    queryFn: ({ signal }) => apiClient.getEvalLapsProviders(days, signal),
-  });
-
-  const stagesQuery = useQuery({
-    queryKey: ["evallaps-stages", days],
-    queryFn: ({ signal }) => apiClient.getEvalLapsStages(days, signal),
-  });
-
-  const renewalsQuery = useQuery({
-    queryKey: ["evallaps-renewals"],
-    queryFn: ({ signal }) => apiClient.getEvalLapsRenewals(signal),
-  });
-
-  const cbQuery = useQuery({
-    queryKey: ["evallaps-circuit-breaker"],
-    queryFn: ({ signal }) => apiClient.getEvalLapsCircuitBreaker(signal),
+  const overviewQuery = useQuery({
+    queryKey: ["evallaps-overview"],
+    queryFn: ({ signal }) => apiClient.getQuotaOverview(signal),
     refetchInterval: 5000,
   });
 
@@ -57,33 +36,24 @@ export default function EvalLapsPage() {
     refetchInterval: 5000,
   });
 
-  const overviewQuery = useQuery({
-    queryKey: ["evallaps-overview"],
-    queryFn: ({ signal }) => apiClient.getQuotaOverview(signal),
-    refetchInterval: 5000,
+  const stagesQuery = useQuery({
+    queryKey: ["evallaps-stages", days],
+    queryFn: ({ signal }) => apiClient.getEvalLapsStages(days, signal),
   });
 
   const isLoading =
-    summaryQuery.isLoading ||
-    providersQuery.isLoading ||
-    stagesQuery.isLoading ||
-    renewalsQuery.isLoading ||
+    overviewQuery.isLoading ||
     modelsQuery.isLoading ||
     balanceQuery.isLoading ||
-    overviewQuery.isLoading;
+    stagesQuery.isLoading;
 
-  const isError =
-    summaryQuery.isError || providersQuery.isError || stagesQuery.isError;
+  const isError = overviewQuery.isError || modelsQuery.isError || stagesQuery.isError;
 
   const handleRefresh = () => {
     void overviewQuery.refetch();
-    void summaryQuery.refetch();
-    void providersQuery.refetch();
-    void stagesQuery.refetch();
-    void renewalsQuery.refetch();
-    void cbQuery.refetch();
     void modelsQuery.refetch();
     void balanceQuery.refetch();
+    void stagesQuery.refetch();
   };
 
   return (
@@ -192,13 +162,7 @@ export default function EvalLapsPage() {
             {balanceQuery.data && <LoadBalancerVisual distribution={balanceQuery.data} />}
           </div>
 
-          {/* 4. Provider Visual Cards Grid */}
-          <ProviderCards
-            providers={providersQuery.data ?? []}
-            catalog={renewalsQuery.data ?? []}
-          />
-
-          {/* 5. Agent Stage Pipeline Funnel Chart */}
+          {/* 4. Agent Stage Pipeline Funnel Chart */}
           <StageChart stages={stagesQuery.data ?? []} />
         </div>
       )}
