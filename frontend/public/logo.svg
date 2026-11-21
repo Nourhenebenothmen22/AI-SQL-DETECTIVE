@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 64" fill="none">
+  <defs>
+    <linearGradient id="full-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A" />
+      <stop offset="100%" stop-color="#030712" />
+    </linearGradient>
+    <linearGradient id="full-cyan-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#0284C7" />
+    </linearGradient>
+    <linearGradient id="full-emerald-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="full-badge-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7" stop-opacity="0.25" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.1" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. Emblem Container (64x64 at x=0) -->
+  <g transform="translate(4, 4)">
+    <!-- Container -->
+    <rect x="0" y="0" width="56" height="56" rx="14" fill="url(#full-bg-grad)" stroke="url(#full-cyan-grad)" stroke-width="1.5" />
+    
+    <!-- Database Disks -->
+    <path d="M13 33c0 2.8 6.7 5 15 5s15-2.2 15-5v3.5c0 2.8-6.7 5-15 5s-15-2.2-15-5V33z" fill="#1E293B" stroke="#334155" stroke-width="1" />
+    <circle cx="15.5" cy="35" r="1.3" fill="url(#full-emerald-grad)" />
+
+    <path d="M13 25c0 2.8 6.7 5 15 5s15-2.2 15-5v3.5c0 2.8-6.7 5-15 5s-15-2.2-15-5V25z" fill="#0F172A" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.4" />
+    <circle cx="15.5" cy="27" r="1.3" fill="url(#full-cyan-grad)" />
+
+    <ellipse cx="28" cy="18" rx="15" ry="5" fill="#1E293B" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.6" />
+    <circle cx="15.5" cy="19.5" r="1.3" fill="#A78BFA" />
+
+    <!-- Detective Lens -->
+    <circle cx="34" cy="28" r="11" fill="#070A12" fill-opacity="0.8" stroke="url(#full-cyan-grad)" stroke-width="2.2" />
+    <path d="M26 23a10 10 0 0 1 12 -2" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.8" />
+    
+    <!-- AI Core Spark -->
+    <circle cx="34" cy="28" r="4" fill="#0F172A" stroke="url(#full-emerald-grad)" stroke-width="1.2" />
+    <path d="M34 25.5v5M31.5 28h5" stroke="#38BDF8" stroke-width="1.2" stroke-linecap="round" />
+    <circle cx="34" cy="28" r="1" fill="#FFFFFF" />
+
+    <!-- Lens Handle -->
+    <path d="M42 36l6.5 6.5" stroke="url(#full-cyan-grad)" stroke-width="2.6" stroke-linecap="round" />
+    <circle cx="48.5" cy="42.5" r="1.8" fill="url(#full-emerald-grad)" />
+  </g>
+
+  <!-- 2. Typography Lockup -->
+  <!-- "AI SQL" -->
+  <text x="74" y="29" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-weight="800" font-size="19" letter-spacing="-0.03em" fill="#F8FAFC">
+    AI SQL
+  </text>
+  
+  <!-- "DETECTIVE" Badge Pill -->
+  <g transform="translate(142, 13)">
+    <rect x="0" y="0" width="86" height="20" rx="5" fill="url(#full-badge-grad)" stroke="#38BDF8" stroke-width="1" stroke-opacity="0.4" />
+    <text x="7" y="14" font-family="'JetBrains Mono', 'Fira Code', monospace" font-weight="700" font-size="10.5" letter-spacing="0.08em" fill="#38BDF8">
+      DETECTIVE
+    </text>
+  </g>
+
+  <!-- Subtitle / Tagline -->
+  <text x="74" y="47" font-family="'JetBrains Mono', 'Fira Code', monospace" font-weight="500" font-size="11" letter-spacing="-0.01em" fill="#94A3B8">
+    Autonomous Query Intelligence &amp; EvalOps
+  </text>
+
+  <!-- Status Beacon Dot -->
+  <circle cx="304" cy="32" r="3.5" fill="#10B981" />
+  <circle cx="304" cy="32" r="6" fill="#10B981" fill-opacity="0.25" />
+</svg>

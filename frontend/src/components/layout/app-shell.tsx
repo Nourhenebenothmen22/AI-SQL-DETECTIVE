@@ -15,6 +15,7 @@ import { useState, type ReactNode } from "react";
 
 import { ConnectionSelector } from "@/components/layout/connection-selector";
 import { DeterministicGuardHud } from "@/components/layout/deterministic-guard-hud";
+import { Logo } from "@/components/brand/logo";
 import { useConnection } from "@/components/providers/connection-provider";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -37,16 +38,8 @@ export function AppShell({ children }: { readonly children: ReactNode }) {
   const sidebarContent = (
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border-subtle px-4 py-4">
-        <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-90">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md border border-accent-primary/40 bg-accent-primary/15 text-accent-primary shadow-xs shadow-accent-primary/20">
-            <TerminalSquare className="h-4 w-4" aria-hidden="true" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold tracking-tight text-text-primary">
-              AI SQL Detective
-            </p>
-            <p className="font-mono text-[11px] text-text-secondary">PostgreSQL 16</p>
-          </div>
+        <Link href="/" className="transition-opacity hover:opacity-90" aria-label="AI SQL Detective Home">
+          <Logo size="md" />
         </Link>
         <Button
           variant="ghost"

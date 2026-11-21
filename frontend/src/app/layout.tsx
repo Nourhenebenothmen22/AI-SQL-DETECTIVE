@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Workbench | AI SQL Detective",
   description:
     "AI-powered PostgreSQL workbench with deterministic read-only security validation, SSE agent progress, and query optimization.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/logo-icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
