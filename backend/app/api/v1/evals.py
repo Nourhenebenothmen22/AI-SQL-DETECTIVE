@@ -74,7 +74,7 @@ async def run_benchmark(
     connection_registry: ConnectionRegistry = Depends(get_connection_registry),
     context: RequestContext = Depends(get_current_context),
 ) -> EvalRunResponse:
-    """Execute the golden queries against the LLM pipeline or mock baseline."""
+    """Execute the golden queries against the live multi-agent LLM pipeline on PostgreSQL."""
     try:
         spec = connection_registry.get("ecommerce_demo")
     except KeyError:

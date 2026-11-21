@@ -5,6 +5,7 @@ from app.core.config import Settings
 from app.main import create_app
 from app.modules.evals.golden_dataset import GOLDEN_BENCHMARK_CASES
 from app.modules.execution.executor import ExecutionResult
+from app.schemas.queries import AskQueryResponse
 
 
 def test_golden_dataset_structure():
@@ -32,6 +33,34 @@ def test_evals_api_endpoints(test_settings: Settings, monkeypatch: pytest.Monkey
             execution_time_ms=4.2,
         ),
     )
+
+    async def fake_run_workflow(*_args, **kwargs):
+        q = kwargs.get("question", "")
+        matched_sql = next(
+            (c.golden_sql for c in GOLDEN_BENCHMARK_CASES if c.question == q),
+            "SELECT 1;",
+        )
+        return AskQueryResponse(
+            run_id=None,
+            connection_id="ecommerce_demo",
+            question=q,
+            candidate_sql=matched_sql,
+            validated_sql=matched_sql,
+            security_status="passed",
+            execution_status="success",
+            execution_time_ms=1.5,
+            row_count=1,
+            was_truncated=False,
+            columns=["metric"],
+            rows=[{"metric": 42}],
+            stages=[],
+            warnings=[],
+        )
+
+    monkeypatch.setattr(
+        "app.modules.ai.service.DetectiveWorkflowService.run_workflow",
+        fake_run_workflow,
+    )
     app = create_app(settings=test_settings)
     with TestClient(app) as client:
         # 1. GET /api/v1/evals/cases
@@ -47,8 +76,8 @@ def test_evals_api_endpoints(test_settings: Settings, monkeypatch: pytest.Monkey
         easy_cases = easy_resp.json()
         assert all(c["difficulty"] == "easy" for c in easy_cases)
 
-        # 3. POST /api/v1/evals/run (mock run)
-        run_resp = client.post("/api/v1/evals/run", json={"mock_run": True})
+        # 3. POST /api/v1/evals/run (live LLM pipeline evaluation)
+        run_resp = client.post("/api/v1/evals/run", json={})
         assert run_resp.status_code == 200
         run_data = run_resp.json()
         assert run_data["summary"]["passed_cases"] == len(GOLDEN_BENCHMARK_CASES)

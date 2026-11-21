@@ -77,7 +77,3 @@ class EvalRunRequest(BaseModel):
 
     case_ids: list[str] | None = None
     difficulty: Literal["easy", "medium", "hard"] | None = None
-    mock_run: bool = Field(
-        default=False,
-        description="Run fast deterministic evaluation using golden queries for CI/demo.",
-    )

@@ -16,7 +16,6 @@ import {
   Play,
   RotateCw,
   ShieldCheck,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -86,21 +85,10 @@ export default function EvalsPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           <Button
-            variant="outline"
-            size="sm"
-            disabled={isRunning}
-            onClick={() => runMutation.mutate({ mock_run: true })}
-            className="text-xs"
-          >
-            <Zap className="h-3.5 w-3.5 text-accent-secondary" aria-hidden="true" />
-            <span>Fast Baseline</span>
-          </Button>
-
-          <Button
             variant="primary"
             size="sm"
             disabled={isRunning}
-            onClick={() => runMutation.mutate({ mock_run: false })}
+            onClick={() => runMutation.mutate({})}
             className="text-xs"
           >
             {isRunning ? (
@@ -108,7 +96,7 @@ export default function EvalsPage() {
             ) : (
               <Play className="h-3.5 w-3.5" aria-hidden="true" />
             )}
-            <span>{isRunning ? "Evaluating Model..." : "Run Live Benchmark"}</span>
+            <span>{isRunning ? "Evaluating Multi-Agent LLMs..." : "Run Live Benchmark"}</span>
           </Button>
         </div>
       </header>

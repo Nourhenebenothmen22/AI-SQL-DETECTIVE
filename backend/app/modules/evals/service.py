@@ -157,23 +157,19 @@ class EvalOpsService:
 
         for case in cases:
             candidate_sql: str | None = None
-            if request.mock_run:
-                # Mock run uses canonical golden queries
-                candidate_sql = case.golden_sql
-            else:
-                try:
-                    # Run LangGraph NL-to-SQL generation workflow
-                    wf_res = await self._workflow.run_workflow(
-                        question=case.question,
-                        spec=spec,
-                        context=context,
-                        max_rows=100,
-                        include_explain=False,
-                    )
-                    candidate_sql = wf_res.validated_sql or wf_res.candidate_sql
-                except Exception as exc:
-                    logger.warning("Error running workflow for case %s: %s", case.id, exc)
-                    candidate_sql = None
+            try:
+                # Run LangGraph NL-to-SQL generation workflow
+                wf_res = await self._workflow.run_workflow(
+                    question=case.question,
+                    spec=spec,
+                    context=context,
+                    max_rows=100,
+                    include_explain=False,
+                )
+                candidate_sql = wf_res.validated_sql or wf_res.candidate_sql
+            except Exception as exc:
+                logger.warning("Error running workflow for case %s: %s", case.id, exc)
+                candidate_sql = None
 
             case_result = evaluate_test_case(
                 case=case,
@@ -185,10 +181,9 @@ class EvalOpsService:
             results.append(case_result)
 
         run_id = f"bench_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:6]}"
-        display_model = f"{model_label} (Ground Truth Mock)" if request.mock_run else model_label
         summary = self._compute_summary(
             run_id=run_id,
-            model_name=display_model,
+            model_name=model_label,
             results=results,
         )
 

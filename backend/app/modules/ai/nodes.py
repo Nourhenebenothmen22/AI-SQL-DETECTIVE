@@ -136,13 +136,32 @@ async def _invoke_structured(
         if isinstance(resp_meta, dict):
             if not prompt_tokens and "token_usage" in resp_meta:
                 tu = resp_meta["token_usage"]
-                prompt_tokens = int(tu.get("prompt_tokens") or 0)
-                completion_tokens = int(tu.get("completion_tokens") or 0)
+                prompt_tokens = int(tu.get("prompt_tokens") or tu.get("input_tokens") or 0)
+                completion_tokens = int(tu.get("completion_tokens") or tu.get("output_tokens") or 0)
+                total_tokens = int(tu.get("total_tokens") or (prompt_tokens + completion_tokens))
+            elif not prompt_tokens and "usage" in resp_meta:
+                tu = resp_meta["usage"]
+                prompt_tokens = int(tu.get("prompt_tokens") or tu.get("input_tokens") or 0)
+                completion_tokens = int(tu.get("completion_tokens") or tu.get("output_tokens") or 0)
                 total_tokens = int(tu.get("total_tokens") or (prompt_tokens + completion_tokens))
             if "model_name" in resp_meta:
                 model_name = str(resp_meta["model_name"])
             elif "model" in resp_meta:
                 model_name = str(resp_meta["model"])
+
+        add_kwargs = getattr(raw_msg, "additional_kwargs", None)
+        if isinstance(add_kwargs, dict) and not prompt_tokens:
+            usage_dict = add_kwargs.get("usage") or add_kwargs.get("token_usage")
+            if isinstance(usage_dict, dict):
+                prompt_tokens = int(
+                    usage_dict.get("prompt_tokens") or usage_dict.get("input_tokens") or 0
+                )
+                completion_tokens = int(
+                    usage_dict.get("completion_tokens") or usage_dict.get("output_tokens") or 0
+                )
+                total_tokens = int(
+                    usage_dict.get("total_tokens") or (prompt_tokens + completion_tokens)
+                )
 
     if model_name == "unknown":
         model_name = (

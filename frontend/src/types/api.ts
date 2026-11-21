@@ -419,5 +419,4 @@ export interface EvalRunResponse {
 export interface EvalRunRequest {
   case_ids?: string[];
   difficulty?: "easy" | "medium" | "hard";
-  mock_run?: boolean;
 }
