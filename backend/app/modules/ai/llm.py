@@ -34,17 +34,17 @@ class QuarantinedProviderError(RuntimeError):
 
 
 def is_circuit_breaker_error(exc: BaseException) -> bool:
-    """Return True if exception indicates a 429 (quota / rate limit) or 401 (auth failure)."""
+    """Return True if exception indicates a 429, 401, 402 (payment/quota), 403, or 404."""
     # Check status_code or code attribute
     code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-    if isinstance(code, int) and code in (401, 403, 404, 429):
+    if isinstance(code, int) and code in (401, 402, 403, 404, 429):
         return True
 
     # Check response attribute (requests, httpx, etc.)
     response = getattr(exc, "response", None)
     if response is not None:
         resp_code = getattr(response, "status_code", None)
-        if isinstance(resp_code, int) and resp_code in (401, 403, 404, 429):
+        if isinstance(resp_code, int) and resp_code in (401, 402, 403, 404, 429):
             return True
 
     # Check exception type name
@@ -57,6 +57,7 @@ def is_circuit_breaker_error(exc: BaseException) -> bool:
             "permissiondenied",
             "resourceexhausted",
             "unauthorized",
+            "payment",
         )
     ):
         return True
@@ -68,6 +69,7 @@ def is_circuit_breaker_error(exc: BaseException) -> bool:
         for k in (
             "429",
             "401",
+            "402",
             "404",
             "quota",
             "rate limit",
@@ -77,6 +79,9 @@ def is_circuit_breaker_error(exc: BaseException) -> bool:
             "unauthorized",
             "invalid api key",
             "not found",
+            "payment method",
+            "payment required",
+            "billing",
         )
     )
 
@@ -220,6 +225,8 @@ def configure_langsmith_tracing(settings: Settings) -> bool:
 
 def _call_init_chat_model(model: str, model_provider: str, **kwargs: Any) -> BaseChatModel:
     try:
+        if model_provider == "openai" and "max_retries" not in kwargs:
+            kwargs["max_retries"] = 0
         return init_chat_model(model=model, model_provider=model_provider, **kwargs)
     except ImportError as exc:
         install_hint = OPTIONAL_PROVIDER_EXTRAS.get(

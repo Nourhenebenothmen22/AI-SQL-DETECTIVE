@@ -59,9 +59,9 @@ class Settings(BaseSettings):
     sql_lock_timeout_ms: int = Field(default=1000, ge=100, le=10000)
     workflow_timeout_seconds: int = Field(default=60, ge=5, le=300)
 
-    # Multi-Provider Resilient Failover Chain (OpenAI, Google Gemini, Mistral, OpenRouter)
-    llm_provider: str = Field(default="openai", min_length=1)
-    llm_model: str = Field(default="gpt-4o-mini", min_length=1)
+    # Multi-Provider Resilient Failover Chain (100% Free Providers)
+    llm_provider: str = Field(default="groq", min_length=1)
+    llm_model: str = Field(default="qwen/qwen3.8-27b", min_length=1)
     llm_api_key: SecretStr | None = None
     llm_base_url: str | None = None
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
@@ -82,18 +82,18 @@ class Settings(BaseSettings):
 
     openrouter_api_key: SecretStr | None = None
     openrouter_api_keys: SecretStr | None = None
-    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
+    openrouter_model: str = "cognitivecomputations/dolphin3.0-r1-mistral-24b:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
     # High-Speed & Generous Providers (Groq, SambaNova, Cloudflare, Cohere, z.ai)
     groq_api_key: SecretStr | None = None
     groq_api_keys: SecretStr | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "qwen/qwen3.8-27b"
     groq_base_url: str = "https://api.groq.com/openai/v1"
 
     sambanova_api_key: SecretStr | None = None
     sambanova_api_keys: SecretStr | None = None
-    sambanova_model: str = "Qwen2.5-Coder-32B-Instruct"
+    sambanova_model: str = "gemma-4-31B-it"
     sambanova_base_url: str = "https://api.sambanova.ai/v1"
 
     cloudflare_api_key: SecretStr | None = None
@@ -108,8 +108,8 @@ class Settings(BaseSettings):
 
     zai_api_key: SecretStr | None = None
     zai_api_keys: SecretStr | None = None
-    zai_model: str = "default"
-    zai_base_url: str | None = None
+    zai_model: str = "glm-4-flash"
+    zai_base_url: str | None = "https://open.bigmodel.cn/api/paas/v4/"
 
     kimi_api_key: SecretStr | None = None
     kimi_api_keys: SecretStr | None = None
@@ -126,9 +126,7 @@ class Settings(BaseSettings):
     meta_model: str = "llama-3.3-70b-instruct"
     meta_base_url: str | None = None
 
-    llm_fallback_chain: str = (
-        "groq,sambanova,openrouter,kimi,novita,google,cohere,cloudflare,zai,mistral,openai"
-    )
+    llm_fallback_chain: str = "groq,sambanova,openrouter,google,cohere,cloudflare,zai,meta"
 
     # Optional LangSmith Observability
     langsmith_tracing: bool = False
@@ -236,14 +234,14 @@ class Settings(BaseSettings):
             "groq",
             "sambanova",
             "openrouter",
-            "kimi",
-            "novita",
             "google",
-            "mistral",
-            "cloudflare",
             "cohere",
+            "cloudflare",
             "zai",
             "meta",
+            "kimi",
+            "novita",
+            "mistral",
             "openai",
         ]
         configured: list[str] = []

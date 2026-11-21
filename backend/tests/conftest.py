@@ -33,8 +33,8 @@ def test_settings() -> Settings:
         app_env="test",
         database_ro_url="postgresql+psycopg://sql_detective_ro:mock_ro_secret@db.internal:5432/testdb",
         database_app_url="postgresql+psycopg://sql_detective_app:mock_app_secret@db.internal:5432/testdb",
-        llm_provider="openai",
-        llm_model="gpt-4o-mini",
+        llm_provider="groq",
+        llm_model="qwen/qwen3.8-27b",
         llm_api_key=None,
     )
 

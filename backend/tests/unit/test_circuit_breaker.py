@@ -32,6 +32,7 @@ def test_is_circuit_breaker_error_detection() -> None:
         is True
     )
     assert is_circuit_breaker_error(Exception("401 Invalid Authentication token")) is True
+    assert is_circuit_breaker_error(Exception("402 - A payment method is required")) is True
     assert (
         is_circuit_breaker_error(Exception("ResourceExhausted: Quota exceeded for model")) is True
     )
