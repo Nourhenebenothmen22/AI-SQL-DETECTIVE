@@ -5,6 +5,8 @@ import { AlertCircle, Gauge, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
 import { CircuitBreakerHud } from "@/components/evallaps/circuit-breaker-hud";
+import { LoadBalancerHud } from "@/components/evallaps/load-balancer-hud";
+import { ModelUsageTable } from "@/components/evallaps/model-usage-table";
 import { ProviderTable } from "@/components/evallaps/provider-table";
 import { StageChart } from "@/components/evallaps/stage-chart";
 import { SummaryCards } from "@/components/evallaps/summary-cards";
@@ -43,11 +45,24 @@ export default function EvalLapsPage() {
     refetchInterval: 5000,
   });
 
+  const modelsQuery = useQuery({
+    queryKey: ["evallaps-models", days],
+    queryFn: ({ signal }) => apiClient.getEvalLapsModels(days, signal),
+  });
+
+  const balanceQuery = useQuery({
+    queryKey: ["evallaps-balance"],
+    queryFn: ({ signal }) => apiClient.getEvalLapsLoadBalancer(signal),
+    refetchInterval: 5000,
+  });
+
   const isLoading =
     summaryQuery.isLoading ||
     providersQuery.isLoading ||
     stagesQuery.isLoading ||
-    renewalsQuery.isLoading;
+    renewalsQuery.isLoading ||
+    modelsQuery.isLoading ||
+    balanceQuery.isLoading;
 
   const isError =
     summaryQuery.isError || providersQuery.isError || stagesQuery.isError;
@@ -58,6 +73,8 @@ export default function EvalLapsPage() {
     void stagesQuery.refetch();
     void renewalsQuery.refetch();
     void cbQuery.refetch();
+    void modelsQuery.refetch();
+    void balanceQuery.refetch();
   };
 
   return (
@@ -154,13 +171,24 @@ export default function EvalLapsPage() {
           {/* 1. KPI Cards */}
           <SummaryCards summary={summaryQuery.data} />
 
-          {/* 2. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
+          {/* 2. Load Balancer Quota-Aware HUD & Cost Split */}
+          {balanceQuery.data && modelsQuery.data && (
+            <LoadBalancerHud
+              distribution={balanceQuery.data}
+              breakdown={modelsQuery.data}
+            />
+          )}
+
+          {/* 3. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
           {cbQuery.data && <CircuitBreakerHud status={cbQuery.data} />}
 
-          {/* 3. Agent Stage Breakdown Chart */}
+          {/* 4. Granular Per-Model Consumption & Remaining Quota Gauges */}
+          {modelsQuery.data && <ModelUsageTable models={modelsQuery.data.models} />}
+
+          {/* 5. Agent Stage Breakdown Chart */}
           <StageChart stages={stagesQuery.data ?? []} />
 
-          {/* 4. Provider Health & Renewal Diagnostics */}
+          {/* 6. Provider Health & Renewal Diagnostics */}
           <ProviderTable
             providers={providersQuery.data ?? []}
             catalog={renewalsQuery.data ?? []}

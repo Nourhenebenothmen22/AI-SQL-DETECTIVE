@@ -14,7 +14,10 @@ from app.schemas.evallaps import (
     CircuitBreakerStatusResponse,
     EvalLapsSummary,
     HealthyKeyDetail,
+    LoadBalancerDistribution,
+    ModelBreakdownResponse,
     ProviderRenewalMetaSchema,
+    ProviderShare,
     ProviderUsageSummary,
     QuarantinedKeyDetail,
     StageUsageSummary,
@@ -176,4 +179,80 @@ class EvalLapsService:
             all_healthy=len(quarantined_details) == 0,
             active_primary_provider=active_primary,
             fallback_chain=chain_order,
+        )
+
+    def get_model_breakdown(self, window_days: int = 30) -> ModelBreakdownResponse:
+        """Retrieve token consumption, input/output cost split, and remaining quota by model."""
+        return self._repo.get_model_breakdown(window_days=window_days)
+
+    def get_load_balancer_status(
+        self, circuit_breaker: LLMCircuitBreaker | None = None
+    ) -> LoadBalancerDistribution:
+        """Calculate quota-aware load balancing state and determine next dispatched model."""
+        cb = circuit_breaker or global_llm_circuit_breaker
+        today_usage = self._repo.get_today_token_usage_by_key()
+        cb_usage = cb.get_all_token_usage()
+
+        chain_order = [
+            p.strip().lower() for p in self._settings.llm_fallback_chain.split(",") if p.strip()
+        ]
+        all_configured_keys: list[tuple[str, str]] = []
+        for provider in chain_order:
+            keys = self._settings.get_provider_keys(provider)
+            for key in keys:
+                raw = key.get_secret_value().strip()
+                if not raw:
+                    continue
+                tail = raw[-4:] if len(raw) >= 4 else "key"
+                key_id = f"{provider}:{tail}"
+                all_configured_keys.append((key_id, provider))
+
+        shares: list[ProviderShare] = []
+        total_tokens_all = 0
+        healthy_keys: list[tuple[str, str, int]] = []
+
+        for k_id, p_name in all_configured_keys:
+            is_healthy = not cb.is_quarantined(k_id)
+            meta = get_provider_renewal_meta(p_name)
+            toks = max(today_usage.get(k_id, 0), cb_usage.get(k_id, 0))
+            total_tokens_all += toks
+
+            model_name = getattr(self._settings, f"{p_name}_model", p_name)
+            tail = k_id.split(":", 1)[1] if ":" in k_id else "key"
+            shares.append(
+                ProviderShare(
+                    provider_name=p_name,
+                    display_name=meta.display_name,
+                    model_name=str(model_name),
+                    key_fingerprint=f"...{tail}",
+                    today_tokens=toks,
+                    traffic_share_percentage=0.0,
+                    is_healthy=is_healthy,
+                )
+            )
+            if is_healthy:
+                healthy_keys.append((k_id, p_name, toks))
+
+        if total_tokens_all > 0:
+            for s in shares:
+                s.traffic_share_percentage = round((s.today_tokens / total_tokens_all) * 100.0, 1)
+
+        # Mathematical selection of next dispatched candidate without if-else:
+        # minimum tokens consumed today among healthy keys
+        if healthy_keys:
+            next_k_id, next_p_name, _ = min(healthy_keys, key=lambda item: item[2])
+            next_model = str(getattr(self._settings, f"{next_p_name}_model", next_p_name))
+            next_tail = next_k_id.split(":", 1)[1] if ":" in next_k_id else "key"
+        else:
+            next_p_name = self._settings.llm_provider
+            next_model = "default-model"
+            next_tail = "none"
+
+        return LoadBalancerDistribution(
+            active_strategy="least_used_quota_aware",
+            total_healthy_providers=len(healthy_keys),
+            next_dispatched_model=next_model,
+            next_dispatched_provider=next_p_name,
+            dispatched_key_fingerprint=f"...{next_tail}",
+            shares=shares,
         )

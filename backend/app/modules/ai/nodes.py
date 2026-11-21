@@ -12,6 +12,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import RunnableConfig
 from pydantic import BaseModel
 
+from app.modules.ai.llm import global_llm_circuit_breaker
 from app.modules.ai.prompts import (
     OPTIMIZATION_AGENT_SYSTEM_PROMPT,
     QUERY_REVIEWER_SYSTEM_PROMPT,
@@ -169,6 +170,10 @@ async def _invoke_structured(
         total_tokens = prompt_tokens + completion_tokens
 
     savings = calculate_savings_usd(prompt_tokens, completion_tokens)
+
+    # Record token usage for real-time load balancing without if-else
+    key_id = f"{provider_name}:{key_fingerprint}"
+    global_llm_circuit_breaker.record_tokens(key_id, total_tokens)
 
     ledger_record: TokenLedgerRecord = {
         "stage_id": stage_id,

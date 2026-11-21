@@ -127,3 +127,36 @@ async def test_circuit_breaker_quarantine_simulation(async_client: AsyncClient) 
         assert "Fenêtre 60s" in quarantined["reset_target_label"]
     finally:
         global_llm_circuit_breaker.clear("groq:mock")
+
+
+@pytest.mark.asyncio
+async def test_get_models_breakdown_endpoint(async_client: AsyncClient) -> None:
+    """Verify GET /api/v1/evallaps/models returns 200 with model metrics and cost split."""
+    response = await async_client.get("/api/v1/evallaps/models?window_days=30")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "models" in data
+    assert "extremes" in data
+    assert "total_input_cost_usd" in data
+    assert "total_output_cost_usd" in data
+    assert "total_savings_usd" in data
+    assert isinstance(data["models"], list)
+    assert isinstance(data["total_input_cost_usd"], float)
+    assert isinstance(data["total_output_cost_usd"], float)
+
+
+@pytest.mark.asyncio
+async def test_get_load_balancer_distribution_endpoint(async_client: AsyncClient) -> None:
+    """Verify GET /api/v1/evallaps/balance returns 200 with active load balancer status."""
+    response = await async_client.get("/api/v1/evallaps/balance")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["active_strategy"] == "least_used_quota_aware"
+    assert "total_healthy_providers" in data
+    assert "next_dispatched_model" in data
+    assert "next_dispatched_provider" in data
+    assert "dispatched_key_fingerprint" in data
+    assert "shares" in data
+    assert isinstance(data["shares"], list)

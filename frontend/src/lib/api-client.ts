@@ -23,6 +23,8 @@ import type {
 import type {
   CircuitBreakerStatusResponse,
   EvalLapsSummary,
+  LoadBalancerDistribution,
+  ModelBreakdownResponse,
   ProviderRenewalMeta,
   ProviderUsageSummary,
   StageUsageSummary,
@@ -322,5 +324,13 @@ export const apiClient = {
 
   getEvalLapsCircuitBreaker(signal?: AbortSignal): Promise<CircuitBreakerStatusResponse> {
     return requestJson<CircuitBreakerStatusResponse>("/api/v1/evallaps/circuit-breaker", { signal });
+  },
+
+  getEvalLapsModels(windowDays = 30, signal?: AbortSignal): Promise<ModelBreakdownResponse> {
+    return requestJson<ModelBreakdownResponse>(`/api/v1/evallaps/models?window_days=${windowDays}`, { signal });
+  },
+
+  getEvalLapsLoadBalancer(signal?: AbortSignal): Promise<LoadBalancerDistribution> {
+    return requestJson<LoadBalancerDistribution>("/api/v1/evallaps/balance", { signal });
   },
 };

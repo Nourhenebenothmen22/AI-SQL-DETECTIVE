@@ -100,3 +100,54 @@ export interface CircuitBreakerStatusResponse {
   active_primary_provider: string;
   fallback_chain: string[];
 }
+
+export interface ModelUsageSummary {
+  model_name: string;
+  provider_name: string;
+  display_name: string;
+  total_tokens: number;
+  prompt_tokens: number;
+  completion_tokens: number;
+  input_cost_usd: number;
+  output_cost_usd: number;
+  total_savings_usd: number;
+  total_calls: number;
+  success_calls: number;
+  error_calls: number;
+  avg_latency_ms: number;
+  estimated_daily_quota_tokens: number;
+  estimated_remaining_tokens: number;
+  usage_percentage: number;
+}
+
+export interface ModelExtremes {
+  most_used_model: ModelUsageSummary | null;
+  least_used_model: ModelUsageSummary | null;
+}
+
+export interface ModelBreakdownResponse {
+  models: ModelUsageSummary[];
+  extremes: ModelExtremes;
+  total_input_cost_usd: number;
+  total_output_cost_usd: number;
+  total_savings_usd: number;
+}
+
+export interface ProviderShare {
+  provider_name: string;
+  display_name: string;
+  model_name: string;
+  key_fingerprint: string;
+  today_tokens: number;
+  traffic_share_percentage: number;
+  is_healthy: boolean;
+}
+
+export interface LoadBalancerDistribution {
+  active_strategy: string;
+  total_healthy_providers: number;
+  next_dispatched_model: string;
+  next_dispatched_provider: string;
+  dispatched_key_fingerprint: string;
+  shares: ProviderShare[];
+}

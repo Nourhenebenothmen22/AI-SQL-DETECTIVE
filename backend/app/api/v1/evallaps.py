@@ -9,6 +9,8 @@ from app.modules.evallaps import EvalLapsService
 from app.schemas.evallaps import (
     CircuitBreakerStatusResponse,
     EvalLapsSummary,
+    LoadBalancerDistribution,
+    ModelBreakdownResponse,
     ProviderRenewalMetaSchema,
     ProviderUsageSummary,
     StageUsageSummary,
@@ -76,3 +78,22 @@ def get_circuit_breaker_health(
 ) -> CircuitBreakerStatusResponse:
     """Retrieve real-time health, quarantines, remaining TTLs, and automated quota reset times."""
     return service.get_circuit_breaker_status()
+
+
+@router.get("/models", response_model=ModelBreakdownResponse)
+def get_models_breakdown(
+    window_days: int = Query(default=30, ge=1, le=365, description="Rolling window in days"),
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> ModelBreakdownResponse:
+    """Retrieve token metrics, input/output cost split, and quota estimates per model."""
+    return service.get_model_breakdown(window_days=window_days)
+
+
+@router.get("/balance", response_model=LoadBalancerDistribution)
+def get_load_balancer_distribution(
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> LoadBalancerDistribution:
+    """Retrieve real-time load balancer distribution status and next dispatched model."""
+    return service.get_load_balancer_status()

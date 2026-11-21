@@ -326,6 +326,8 @@ Tous les endpoints sont fortement typés avec Pydantic v2 et documentés via Ope
 | `GET` | `/api/v1/evallaps/runs/{run_id}`| *-* | `RunLedgerDetailResponse` | Télémétrie détaillée de tous les appels LLM ayant constitué une exécution donnée. |
 | `GET` | `/api/v1/evallaps/renewals` | *-* | `RenewalCatalogResponse` | Catalogue exhaustif des 10 fournisseurs avec périodicité de renouvellement et quotas. |
 | `GET` | `/api/v1/evallaps/circuit-breaker`| *-* | `CircuitBreakerStatusResponse`| Statut live du Circuit Breaker : quarantaines actives, décomptes TTL et chaîne active. |
+| `GET` | `/api/v1/evallaps/models` | `?window_days=` | `ModelBreakdownResponse` | Télémétrie granulaire par modèle, décomposition des coûts Input/Output et quotas restants. |
+| `GET` | `/api/v1/evallaps/balance` | *-* | `LoadBalancerDistribution` | Répartition de charge déterministe (Load Balancer sans if-else) et modèle désigné. |
 
 ---
 

@@ -34,17 +34,17 @@ class QuarantinedProviderError(RuntimeError):
 
 
 def is_circuit_breaker_error(exc: BaseException) -> bool:
-    """Return True if exception indicates a 429, 401, 402 (payment/quota), 403, or 404."""
+    """Return True if exception indicates a 429, 401, 402 (payment/quota), 403, 404, 405, or 400."""
     # Check status_code or code attribute
     code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
-    if isinstance(code, int) and code in (401, 402, 403, 404, 429):
+    if isinstance(code, int) and code in (400, 401, 402, 403, 404, 405, 429):
         return True
 
     # Check response attribute (requests, httpx, etc.)
     response = getattr(exc, "response", None)
     if response is not None:
         resp_code = getattr(response, "status_code", None)
-        if isinstance(resp_code, int) and resp_code in (401, 402, 403, 404, 429):
+        if isinstance(resp_code, int) and resp_code in (400, 401, 402, 403, 404, 405, 429):
             return True
 
     # Check exception type name
@@ -87,13 +87,32 @@ def is_circuit_breaker_error(exc: BaseException) -> bool:
 
 
 class LLMCircuitBreaker:
-    """Thread-safe in-memory circuit breaker putting failing LLM providers in quarantine."""
+    """Thread-safe in-memory circuit breaker and quota-aware load balancer."""
 
     def __init__(self, default_ttl_seconds: float = DEFAULT_CIRCUIT_BREAKER_TTL_SECONDS) -> None:
         self._default_ttl = default_ttl_seconds
         # Maps provider name to (expiry_monotonic, failure_reason)
         self._quarantine: dict[str, tuple[float, str]] = {}
+        # Maps key_id to cumulative tokens consumed for quota-aware load balancing
+        self._token_usage: dict[str, int] = {}
         self._lock = threading.Lock()
+
+    def record_tokens(self, key_id: str, tokens: int) -> None:
+        """Record token consumption for deterministic quota load balancing."""
+        k = key_id.strip().lower()
+        with self._lock:
+            self._token_usage[k] = self._token_usage.get(k, 0) + max(0, tokens)
+
+    def get_token_usage(self, key_id: str) -> int:
+        """Get cumulative tokens consumed by key_id."""
+        k = key_id.strip().lower()
+        with self._lock:
+            return self._token_usage.get(k, 0)
+
+    def get_all_token_usage(self) -> dict[str, int]:
+        """Return a snapshot of all token consumption per key."""
+        with self._lock:
+            return dict(self._token_usage)
 
     def record_failure(
         self,
@@ -537,10 +556,11 @@ def build_chat_model(
             "GOOGLE_API_KEY, or OPENAI_API_KEY in root .env to enable SQL workflows."
         )
 
-    # Prioritize healthy models over quarantined ones
+    # Quota-Aware Load Balancing without if-else: sort healthy models by least tokens consumed
     healthy_models = [(k_id, m) for k_id, m in all_models if not cb.is_quarantined(k_id)]
+    sorted_healthy = sorted(healthy_models, key=lambda pair: cb.get_token_usage(pair[0]))
     quarantined_models = [(k_id, m) for k_id, m in all_models if cb.is_quarantined(k_id)]
-    ordered = healthy_models + quarantined_models
+    ordered = sorted_healthy + quarantined_models
 
     models = [m for _, m in ordered]
     primary = models[0]

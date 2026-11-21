@@ -10,9 +10,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import Settings
 from app.modules.ai.state import TokenLedgerRecord
 from app.modules.database.models.app_meta import LLMTokenLedger
-from app.modules.evallaps.types import get_provider_renewal_meta
+from app.modules.evallaps.types import (
+    calculate_input_cost_usd,
+    calculate_output_cost_usd,
+    get_provider_renewal_meta,
+)
 from app.schemas.evallaps import (
     EvalLapsSummary,
+    ModelBreakdownResponse,
+    ModelExtremes,
+    ModelUsageSummary,
     ProviderRenewalMetaSchema,
     ProviderUsageSummary,
     StageUsageSummary,
@@ -293,3 +300,138 @@ class EvalLapsRepository:
         except (SQLAlchemyError, Exception):
             logger.warning("Failed to retrieve token ledger for run_id %s.", run_id)
             return []
+
+    def get_model_breakdown(self, window_days: int = 30) -> ModelBreakdownResponse:
+        """Aggregate token usage, input/output cost split, and remaining quota by model."""
+        now_utc = datetime.now(UTC)
+        since_window = now_utc - timedelta(days=window_days)
+        today_start = now_utc.replace(hour=0, minute=0, second=0, microsecond=0)
+        t = LLMTokenLedger.__table__
+
+        # 1. Rolling window query grouped by model_name and provider_name
+        window_stmt = (
+            select(
+                t.c.model_name,
+                t.c.provider_name,
+                func.coalesce(func.sum(t.c.total_tokens), 0).label("total_tokens"),
+                func.coalesce(func.sum(t.c.prompt_tokens), 0).label("prompt_tokens"),
+                func.coalesce(func.sum(t.c.completion_tokens), 0).label("completion_tokens"),
+                func.count(t.c.id).label("total_calls"),
+                func.coalesce(func.sum(case((t.c.http_status == 200, 1), else_=0)), 0).label(
+                    "success_calls"
+                ),
+                func.coalesce(func.sum(case((t.c.http_status != 200, 1), else_=0)), 0).label(
+                    "error_calls"
+                ),
+                func.coalesce(func.avg(t.c.latency_ms), 0.0).label("avg_latency_ms"),
+            )
+            .where(t.c.recorded_at >= since_window)
+            .group_by(t.c.model_name, t.c.provider_name)
+            .order_by(desc(func.sum(t.c.total_tokens)))
+        )
+
+        # 2. Today tokens per model for remaining quota computation
+        today_stmt = (
+            select(
+                t.c.model_name,
+                func.coalesce(func.sum(t.c.total_tokens), 0).label("today_tokens"),
+            )
+            .where(t.c.recorded_at >= today_start)
+            .group_by(t.c.model_name)
+        )
+
+        try:
+            with self._engine.connect() as conn:
+                w_rows = conn.execute(window_stmt).all()
+                t_rows = conn.execute(today_stmt).all()
+                today_map = {str(r.model_name): int(r.today_tokens) for r in t_rows}
+
+            models: list[ModelUsageSummary] = []
+            total_input_cost = 0.0
+            total_output_cost = 0.0
+
+            for r in w_rows:
+                p_name = str(r.provider_name)
+                m_name = str(r.model_name)
+                prompt_t = int(r.prompt_tokens)
+                comp_t = int(r.completion_tokens)
+                tot_t = int(r.total_tokens)
+
+                in_cost = calculate_input_cost_usd(prompt_t)
+                out_cost = calculate_output_cost_usd(comp_t)
+                tot_savings = round(in_cost + out_cost, 6)
+
+                total_input_cost += in_cost
+                total_output_cost += out_cost
+
+                meta = get_provider_renewal_meta(p_name)
+                daily_quota = meta.daily_token_quota
+                today_used = today_map.get(m_name, 0)
+                remaining = max(0, daily_quota - today_used)
+                usage_pct = round((today_used / daily_quota) * 100.0, 1) if daily_quota > 0 else 0.0
+
+                models.append(
+                    ModelUsageSummary(
+                        model_name=m_name,
+                        provider_name=p_name,
+                        display_name=meta.display_name,
+                        total_tokens=tot_t,
+                        prompt_tokens=prompt_t,
+                        completion_tokens=comp_t,
+                        input_cost_usd=in_cost,
+                        output_cost_usd=out_cost,
+                        total_savings_usd=tot_savings,
+                        total_calls=int(r.total_calls),
+                        success_calls=int(r.success_calls),
+                        error_calls=int(r.error_calls),
+                        avg_latency_ms=round(float(r.avg_latency_ms), 2),
+                        estimated_daily_quota_tokens=daily_quota,
+                        estimated_remaining_tokens=remaining,
+                        usage_percentage=usage_pct,
+                    )
+                )
+
+            # Mathematical identification of most and least used models without if-else
+            most_used = max(models, key=lambda m: m.total_tokens) if models else None
+            least_used = min(models, key=lambda m: m.total_tokens) if models else None
+
+            return ModelBreakdownResponse(
+                models=models,
+                extremes=ModelExtremes(
+                    most_used_model=most_used,
+                    least_used_model=least_used,
+                ),
+                total_input_cost_usd=round(total_input_cost, 6),
+                total_output_cost_usd=round(total_output_cost, 6),
+                total_savings_usd=round(total_input_cost + total_output_cost, 6),
+            )
+        except (SQLAlchemyError, Exception):
+            logger.warning("Failed to aggregate EvalLaps model breakdown.")
+            return ModelBreakdownResponse(
+                models=[],
+                extremes=ModelExtremes(),
+                total_input_cost_usd=0.0,
+                total_output_cost_usd=0.0,
+                total_savings_usd=0.0,
+            )
+
+    def get_today_token_usage_by_key(self) -> dict[str, int]:
+        """Fetch today's total token consumption indexed by key_id for live load balancing."""
+        today_start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        t = LLMTokenLedger.__table__
+        stmt = (
+            select(
+                t.c.provider_name,
+                t.c.key_fingerprint,
+                func.coalesce(func.sum(t.c.total_tokens), 0).label("today_tokens"),
+            )
+            .where(t.c.recorded_at >= today_start)
+            .group_by(t.c.provider_name, t.c.key_fingerprint)
+        )
+        try:
+            with self._engine.connect() as conn:
+                rows = conn.execute(stmt).all()
+            return {f"{r.provider_name}:{r.key_fingerprint}": int(r.today_tokens) for r in rows}
+        except (SQLAlchemyError, Exception):
+            logger.warning("Failed to query today's key token usage.")
+            return {}

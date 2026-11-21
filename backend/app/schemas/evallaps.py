@@ -115,3 +115,64 @@ class CircuitBreakerStatusResponse(BaseModel):
     all_healthy: bool
     active_primary_provider: str
     fallback_chain: list[str]
+
+
+class ModelUsageSummary(BaseModel):
+    """Detailed token consumption, input/output cost split, and remaining quota per model."""
+
+    model_name: str
+    provider_name: str
+    display_name: str
+    total_tokens: int
+    prompt_tokens: int
+    completion_tokens: int
+    input_cost_usd: float
+    output_cost_usd: float
+    total_savings_usd: float
+    total_calls: int
+    success_calls: int
+    error_calls: int
+    avg_latency_ms: float
+    estimated_daily_quota_tokens: int
+    estimated_remaining_tokens: int
+    usage_percentage: float
+
+
+class ModelExtremes(BaseModel):
+    """Identification of most utilized and least utilized models for load balancing."""
+
+    most_used_model: ModelUsageSummary | None = None
+    least_used_model: ModelUsageSummary | None = None
+
+
+class ModelBreakdownResponse(BaseModel):
+    """Aggregated analytical payload broken down by individual model."""
+
+    models: list[ModelUsageSummary]
+    extremes: ModelExtremes
+    total_input_cost_usd: float
+    total_output_cost_usd: float
+    total_savings_usd: float
+
+
+class ProviderShare(BaseModel):
+    """Distribution share of an individual provider key in the active load balancer."""
+
+    provider_name: str
+    display_name: str
+    model_name: str
+    key_fingerprint: str
+    today_tokens: int
+    traffic_share_percentage: float
+    is_healthy: bool
+
+
+class LoadBalancerDistribution(BaseModel):
+    """Real-time load balancing and quota-aware distribution status across healthy keys."""
+
+    active_strategy: str = "least_used_quota_aware"
+    total_healthy_providers: int
+    next_dispatched_model: str
+    next_dispatched_provider: str
+    dispatched_key_fingerprint: str
+    shares: list[ProviderShare]
