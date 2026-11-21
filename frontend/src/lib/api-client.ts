@@ -27,8 +27,11 @@ import type {
   ModelBreakdownResponse,
   ProviderRenewalMeta,
   ProviderUsageSummary,
+  QuotaOverviewResponse,
+  ResetCycleResponse,
   StageUsageSummary,
   TokenLedgerItem,
+  TokenTimeSeriesResponse,
 } from "@/types/evallaps";
 
 const API_BASE_URL =
@@ -332,5 +335,19 @@ export const apiClient = {
 
   getEvalLapsLoadBalancer(signal?: AbortSignal): Promise<LoadBalancerDistribution> {
     return requestJson<LoadBalancerDistribution>("/api/v1/evallaps/balance", { signal });
+  },
+
+  getQuotaOverview(signal?: AbortSignal): Promise<QuotaOverviewResponse> {
+    return requestJson<QuotaOverviewResponse>("/api/v1/evallaps/overview", { signal });
+  },
+
+  getTokenTimeseries(windowDays = 30, signal?: AbortSignal): Promise<TokenTimeSeriesResponse> {
+    return requestJson<TokenTimeSeriesResponse>(`/api/v1/evallaps/timeseries?window_days=${windowDays}`, { signal });
+  },
+
+  resetQuotaCycle(): Promise<ResetCycleResponse> {
+    return requestJson<ResetCycleResponse>("/api/v1/evallaps/reset-cycle", {
+      method: "POST",
+    });
   },
 };

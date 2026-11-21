@@ -24,6 +24,7 @@ from app.schemas.evallaps import (
     ProviderUsageSummary,
     StageUsageSummary,
     TokenLedgerItem,
+    TokenTimeSeriesPoint,
 )
 
 logger = logging.getLogger(__name__)
@@ -435,3 +436,48 @@ class EvalLapsRepository:
         except (SQLAlchemyError, Exception):
             logger.warning("Failed to query today's key token usage.")
             return {}
+
+    def get_token_timeseries(self, window_days: int = 30) -> list[TokenTimeSeriesPoint]:
+        """Aggregate daily or hourly token burn rate from live PostgreSQL ledger."""
+        now_utc = datetime.now(UTC)
+        since = now_utc - timedelta(days=window_days)
+        t = LLMTokenLedger.__table__
+
+        trunc_unit = "hour" if window_days <= 1 else "day"
+        bucket_col = func.date_trunc(trunc_unit, t.c.recorded_at).label("time_bucket")
+
+        stmt = (
+            select(
+                bucket_col,
+                func.coalesce(func.sum(t.c.prompt_tokens), 0).label("prompt_tokens"),
+                func.coalesce(func.sum(t.c.completion_tokens), 0).label("completion_tokens"),
+                func.coalesce(func.sum(t.c.total_tokens), 0).label("total_tokens"),
+                func.coalesce(func.sum(t.c.estimated_savings_usd), 0.0).label("savings_usd"),
+            )
+            .where(t.c.recorded_at >= since)
+            .group_by(bucket_col)
+            .order_by(bucket_col.asc())
+        )
+
+        try:
+            with self._engine.connect() as conn:
+                rows = conn.execute(stmt).all()
+
+            points: list[TokenTimeSeriesPoint] = []
+            for r in rows:
+                dt: datetime = r.time_bucket
+                label = dt.strftime("%H:%M" if trunc_unit == "hour" else "%b %d")
+                points.append(
+                    TokenTimeSeriesPoint(
+                        timestamp=dt,
+                        label=label,
+                        prompt_tokens=int(r.prompt_tokens),
+                        completion_tokens=int(r.completion_tokens),
+                        total_tokens=int(r.total_tokens),
+                        savings_usd=round(float(r.savings_usd), 6),
+                    )
+                )
+            return points
+        except (SQLAlchemyError, Exception) as exc:
+            logger.warning("Failed to fetch token timeseries: %s", exc)
+            return []

@@ -13,8 +13,11 @@ from app.schemas.evallaps import (
     ModelBreakdownResponse,
     ProviderRenewalMetaSchema,
     ProviderUsageSummary,
+    QuotaOverviewResponse,
+    ResetCycleResponse,
     StageUsageSummary,
     TokenLedgerItem,
+    TokenTimeSeriesResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -97,3 +100,31 @@ def get_load_balancer_distribution(
 ) -> LoadBalancerDistribution:
     """Retrieve real-time load balancer distribution status and next dispatched model."""
     return service.get_load_balancer_status()
+
+
+@router.get("/overview", response_model=QuotaOverviewResponse)
+def get_quota_overview(
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> QuotaOverviewResponse:
+    """Retrieve executive quota and token metrics modeled after Google AI Studio / OpenAI."""
+    return service.get_quota_overview()
+
+
+@router.get("/timeseries", response_model=TokenTimeSeriesResponse)
+def get_token_timeseries(
+    window_days: int = Query(default=30, ge=1, le=365, description="Rolling window in days"),
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> TokenTimeSeriesResponse:
+    """Retrieve daily or hourly token burn rate time series for charts."""
+    return service.get_token_timeseries(window_days=window_days)
+
+
+@router.post("/reset-cycle", response_model=ResetCycleResponse)
+def reset_quota_cycle(
+    service: EvalLapsService = Depends(get_evallaps_service),
+    _context: RequestContext = Depends(get_current_context),
+) -> ResetCycleResponse:
+    """Reset local in-memory token counters and re-arm all quarantined keys."""
+    return service.reset_quota_cycle()

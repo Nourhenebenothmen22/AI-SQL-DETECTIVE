@@ -8,8 +8,10 @@ import { CircuitBreakerHud } from "@/components/evallaps/circuit-breaker-hud";
 import { LoadBalancerHud } from "@/components/evallaps/load-balancer-hud";
 import { ModelUsageTable } from "@/components/evallaps/model-usage-table";
 import { ProviderTable } from "@/components/evallaps/provider-table";
+import { QuotaHero } from "@/components/evallaps/quota-hero";
 import { StageChart } from "@/components/evallaps/stage-chart";
 import { SummaryCards } from "@/components/evallaps/summary-cards";
+import { TokenBurnChart } from "@/components/evallaps/token-burn-chart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
@@ -56,18 +58,26 @@ export default function EvalLapsPage() {
     refetchInterval: 5000,
   });
 
+  const overviewQuery = useQuery({
+    queryKey: ["evallaps-overview"],
+    queryFn: ({ signal }) => apiClient.getQuotaOverview(signal),
+    refetchInterval: 5000,
+  });
+
   const isLoading =
     summaryQuery.isLoading ||
     providersQuery.isLoading ||
     stagesQuery.isLoading ||
     renewalsQuery.isLoading ||
     modelsQuery.isLoading ||
-    balanceQuery.isLoading;
+    balanceQuery.isLoading ||
+    overviewQuery.isLoading;
 
   const isError =
     summaryQuery.isError || providersQuery.isError || stagesQuery.isError;
 
   const handleRefresh = () => {
+    void overviewQuery.refetch();
     void summaryQuery.refetch();
     void providersQuery.refetch();
     void stagesQuery.refetch();
@@ -166,12 +176,18 @@ export default function EvalLapsPage() {
       )}
 
       {/* Content */}
-      {!isLoading && !isError && summaryQuery.data && (
+      {!isLoading && !isError && (
         <div className="space-y-6">
-          {/* 1. KPI Cards */}
-          <SummaryCards summary={summaryQuery.data} />
+          {/* 1. Google AI Studio Style Executive Quota & Resets Hero */}
+          {overviewQuery.data && <QuotaHero overview={overviewQuery.data} />}
 
-          {/* 2. Load Balancer Quota-Aware HUD & Cost Split */}
+          {/* 2. Token Velocity & Burn Rate Time Series Chart */}
+          <TokenBurnChart />
+
+          {/* 3. KPI Summary Cards */}
+          {summaryQuery.data && <SummaryCards summary={summaryQuery.data} />}
+
+          {/* 4. Load Balancer Quota-Aware HUD & Cost Split */}
           {balanceQuery.data && modelsQuery.data && (
             <LoadBalancerHud
               distribution={balanceQuery.data}
@@ -179,16 +195,16 @@ export default function EvalLapsPage() {
             />
           )}
 
-          {/* 3. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
+          {/* 5. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
           {cbQuery.data && <CircuitBreakerHud status={cbQuery.data} />}
 
-          {/* 4. Granular Per-Model Consumption & Remaining Quota Gauges */}
+          {/* 6. Granular Per-Model Consumption & Remaining Quota Gauges */}
           {modelsQuery.data && <ModelUsageTable models={modelsQuery.data.models} />}
 
-          {/* 5. Agent Stage Breakdown Chart */}
+          {/* 7. Agent Stage Breakdown Chart */}
           <StageChart stages={stagesQuery.data ?? []} />
 
-          {/* 6. Provider Health & Renewal Diagnostics */}
+          {/* 8. Provider Health & Renewal Diagnostics */}
           <ProviderTable
             providers={providersQuery.data ?? []}
             catalog={renewalsQuery.data ?? []}

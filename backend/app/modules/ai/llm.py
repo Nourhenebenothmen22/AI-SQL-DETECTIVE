@@ -218,6 +218,12 @@ class LLMCircuitBreaker:
             else:
                 self._quarantine.clear()
 
+    def reset_all_tokens(self) -> None:
+        """Reset in-memory token ledger and clear quarantines for a fresh quota cycle."""
+        with self._lock:
+            self._token_usage.clear()
+            self._quarantine.clear()
+
 
 global_llm_circuit_breaker = LLMCircuitBreaker()
 

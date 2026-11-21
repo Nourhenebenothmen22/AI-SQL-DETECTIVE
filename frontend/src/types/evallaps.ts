@@ -151,3 +151,45 @@ export interface LoadBalancerDistribution {
   dispatched_key_fingerprint: string;
   shares: ProviderShare[];
 }
+
+export interface TokenTimeSeriesPoint {
+  timestamp: string;
+  label: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  savings_usd: number;
+}
+
+export interface TokenTimeSeriesResponse {
+  points: TokenTimeSeriesPoint[];
+  window_days: number;
+  total_tokens: number;
+  total_savings_usd: number;
+}
+
+export interface QuotaOverviewResponse {
+  today_tokens: number;
+  today_quota_tokens: number;
+  today_remaining_tokens: number;
+  today_usage_percentage: number;
+  month_tokens: number;
+  month_quota_tokens: number;
+  month_remaining_tokens: number;
+  month_usage_percentage: number;
+  seconds_until_daily_reset: number;
+  daily_reset_time_utc: string;
+  seconds_until_monthly_reset: number;
+  monthly_reset_date_utc: string;
+  daily_cycle_percentage_elapsed: number;
+  active_healthy_keys: number;
+  total_configured_keys: number;
+  pool_health_status: "optimal" | "moderate" | "warning" | "critical" | string;
+}
+
+export interface ResetCycleResponse {
+  status: string;
+  message: string;
+  reset_at: string;
+}
+

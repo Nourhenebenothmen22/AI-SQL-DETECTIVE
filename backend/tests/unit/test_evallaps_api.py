@@ -160,3 +160,49 @@ async def test_get_load_balancer_distribution_endpoint(async_client: AsyncClient
     assert "dispatched_key_fingerprint" in data
     assert "shares" in data
     assert isinstance(data["shares"], list)
+
+
+@pytest.mark.asyncio
+async def test_get_quota_overview_endpoint(async_client: AsyncClient) -> None:
+    """Verify GET /api/v1/evallaps/overview returns 200 with Google AI Studio quota metrics."""
+    response = await async_client.get("/api/v1/evallaps/overview")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "today_tokens" in data
+    assert "today_quota_tokens" in data
+    assert "today_remaining_tokens" in data
+    assert "today_usage_percentage" in data
+    assert "month_tokens" in data
+    assert "month_quota_tokens" in data
+    assert "seconds_until_daily_reset" in data
+    assert "daily_reset_time_utc" in data
+    assert "seconds_until_monthly_reset" in data
+    assert "daily_cycle_percentage_elapsed" in data
+    assert "pool_health_status" in data
+    assert data["pool_health_status"] in ("optimal", "moderate", "warning", "critical")
+
+
+@pytest.mark.asyncio
+async def test_get_token_timeseries_endpoint(async_client: AsyncClient) -> None:
+    """Verify GET /api/v1/evallaps/timeseries returns 200 with chart data points."""
+    response = await async_client.get("/api/v1/evallaps/timeseries?window_days=7")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "points" in data
+    assert "window_days" in data
+    assert "total_tokens" in data
+    assert isinstance(data["points"], list)
+
+
+@pytest.mark.asyncio
+async def test_reset_quota_cycle_endpoint(async_client: AsyncClient) -> None:
+    """Verify POST /api/v1/evallaps/reset-cycle resets memory counters and returns 200."""
+    response = await async_client.post("/api/v1/evallaps/reset-cycle")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["status"] == "ok"
+    assert "reset_at" in data
+

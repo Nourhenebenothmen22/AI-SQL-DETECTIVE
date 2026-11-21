@@ -176,3 +176,52 @@ class LoadBalancerDistribution(BaseModel):
     next_dispatched_provider: str
     dispatched_key_fingerprint: str
     shares: list[ProviderShare]
+
+
+class TokenTimeSeriesPoint(BaseModel):
+    """Single point in the token consumption time series."""
+
+    timestamp: datetime
+    label: str
+    prompt_tokens: int
+    completion_tokens: int
+    total_tokens: int
+    savings_usd: float
+
+
+class TokenTimeSeriesResponse(BaseModel):
+    """Time-series aggregation of token consumption for charts."""
+
+    points: list[TokenTimeSeriesPoint]
+    window_days: int
+    total_tokens: int
+    total_savings_usd: float
+
+
+class QuotaOverviewResponse(BaseModel):
+    """Executive quota and token overview modeled after modern AI platforms."""
+
+    today_tokens: int
+    today_quota_tokens: int
+    today_remaining_tokens: int
+    today_usage_percentage: float
+    month_tokens: int
+    month_quota_tokens: int
+    month_remaining_tokens: int
+    month_usage_percentage: float
+    seconds_until_daily_reset: int
+    daily_reset_time_utc: str
+    seconds_until_monthly_reset: int
+    monthly_reset_date_utc: str
+    daily_cycle_percentage_elapsed: float
+    active_healthy_keys: int
+    total_configured_keys: int
+    pool_health_status: str
+
+
+class ResetCycleResponse(BaseModel):
+    """Response returned upon manual reset and resynchronization of the local quota cycle."""
+
+    status: str
+    message: str
+    reset_at: datetime

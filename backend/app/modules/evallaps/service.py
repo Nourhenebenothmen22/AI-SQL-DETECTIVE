@@ -20,8 +20,11 @@ from app.schemas.evallaps import (
     ProviderShare,
     ProviderUsageSummary,
     QuarantinedKeyDetail,
+    QuotaOverviewResponse,
+    ResetCycleResponse,
     StageUsageSummary,
     TokenLedgerItem,
+    TokenTimeSeriesResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -255,4 +258,107 @@ class EvalLapsService:
             next_dispatched_provider=next_p_name,
             dispatched_key_fingerprint=f"...{next_tail}",
             shares=shares,
+        )
+
+    def get_token_timeseries(self, window_days: int = 30) -> TokenTimeSeriesResponse:
+        """Fetch daily/hourly token timeseries points from PostgreSQL."""
+        points = self._repo.get_token_timeseries(window_days=window_days)
+        total_tokens = sum(p.total_tokens for p in points)
+        total_savings = round(sum(p.savings_usd for p in points), 6)
+        return TokenTimeSeriesResponse(
+            points=points,
+            window_days=window_days,
+            total_tokens=total_tokens,
+            total_savings_usd=total_savings,
+        )
+
+    def get_quota_overview(
+        self, circuit_breaker: LLMCircuitBreaker | None = None
+    ) -> QuotaOverviewResponse:
+        """Executive quota overview modeled after modern AI platforms (Google AI Studio)."""
+        cb = circuit_breaker or global_llm_circuit_breaker
+        summary = self._repo.get_summary(window_days=30)
+        now_utc = datetime.now(UTC)
+
+        # 1. Resets countdown computation
+        next_daily_reset = (now_utc + timedelta(days=1)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        seconds_until_daily = max(0, int((next_daily_reset - now_utc).total_seconds()))
+        daily_pct_elapsed = round(((86400 - seconds_until_daily) / 86400) * 100.0, 1)
+
+        next_month_y = now_utc.year + (1 if now_utc.month == 12 else 0)
+        next_month_m = 1 if now_utc.month == 12 else now_utc.month + 1
+        next_monthly_reset = datetime(next_month_y, next_month_m, 1, 0, 0, 0, tzinfo=UTC)
+        seconds_until_monthly = max(0, int((next_monthly_reset - now_utc).total_seconds()))
+
+        # 2. Configured and healthy keys count
+        chain_order = [
+            p.strip().lower() for p in self._settings.llm_fallback_chain.split(",") if p.strip()
+        ]
+        all_keys: list[str] = []
+        for provider in chain_order:
+            for key in self._settings.get_provider_keys(provider):
+                raw = key.get_secret_value().strip()
+                if raw:
+                    tail = raw[-4:] if len(raw) >= 4 else "key"
+                    all_keys.append(f"{provider}:{tail}")
+
+        active_healthy = sum(1 for k in all_keys if not cb.is_quarantined(k))
+        total_keys = len(all_keys)
+
+        # 3. Quotas computation
+        total_daily_quota = sum(get_provider_renewal_meta(p).daily_token_quota for p in chain_order)
+        total_monthly_quota = total_daily_quota * 30
+
+        today_toks = summary.today_tokens
+        today_rem = max(0, total_daily_quota - today_toks)
+        today_pct = (
+            round((today_toks / total_daily_quota) * 100.0, 1) if total_daily_quota > 0 else 0.0
+        )
+
+        month_toks = summary.this_month_tokens
+        month_rem = max(0, total_monthly_quota - month_toks)
+        month_pct = (
+            round((month_toks / total_monthly_quota) * 100.0, 1) if total_monthly_quota > 0 else 0.0
+        )
+
+        # Functional health status mapping without if-else
+        health_thresholds = [
+            (90.0, "critical"),
+            (75.0, "warning"),
+            (40.0, "moderate"),
+            (0.0, "optimal"),
+        ]
+        pool_status = next(st for th, st in health_thresholds if today_pct >= th)
+
+        return QuotaOverviewResponse(
+            today_tokens=today_toks,
+            today_quota_tokens=total_daily_quota,
+            today_remaining_tokens=today_rem,
+            today_usage_percentage=today_pct,
+            month_tokens=month_toks,
+            month_quota_tokens=total_monthly_quota,
+            month_remaining_tokens=month_rem,
+            month_usage_percentage=month_pct,
+            seconds_until_daily_reset=seconds_until_daily,
+            daily_reset_time_utc=next_daily_reset.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            seconds_until_monthly_reset=seconds_until_monthly,
+            monthly_reset_date_utc=next_monthly_reset.strftime("%Y-%m-%d"),
+            daily_cycle_percentage_elapsed=daily_pct_elapsed,
+            active_healthy_keys=active_healthy,
+            total_configured_keys=total_keys,
+            pool_health_status=pool_status,
+        )
+
+    def reset_quota_cycle(
+        self, circuit_breaker: LLMCircuitBreaker | None = None
+    ) -> ResetCycleResponse:
+        """Reset in-memory token counters and clear quarantines for cycle replenishment."""
+        cb = circuit_breaker or global_llm_circuit_breaker
+        cb.reset_all_tokens()
+        return ResetCycleResponse(
+            status="ok",
+            message="Circuit breaker tokens and quarantines reset successfully.",
+            reset_at=datetime.now(UTC),
         )
