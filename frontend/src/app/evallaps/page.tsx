@@ -4,14 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Gauge, RefreshCw } from "lucide-react";
 import { useState } from "react";
 
-import { CircuitBreakerHud } from "@/components/evallaps/circuit-breaker-hud";
-import { LoadBalancerHud } from "@/components/evallaps/load-balancer-hud";
-import { ModelUsageTable } from "@/components/evallaps/model-usage-table";
-import { ProviderTable } from "@/components/evallaps/provider-table";
+import { LoadBalancerVisual } from "@/components/evallaps/load-balancer-visual";
+import { ModelDistributionChart } from "@/components/evallaps/model-distribution-chart";
+import { ProviderCards } from "@/components/evallaps/provider-cards";
 import { QuotaHero } from "@/components/evallaps/quota-hero";
 import { StageChart } from "@/components/evallaps/stage-chart";
-import { SummaryCards } from "@/components/evallaps/summary-cards";
 import { TokenBurnChart } from "@/components/evallaps/token-burn-chart";
+import { TokenIoChart } from "@/components/evallaps/token-io-chart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiClient } from "@/lib/api-client";
@@ -101,7 +100,7 @@ export default function EvalLapsPage() {
             </h1>
           </div>
           <p className="text-xs text-text-secondary">
-            Comptabilité chirurgicale des tokens consommés, quantification des économies face aux modèles payants (GPT-4o) et diagnostic de renouvellement des clés API.
+            Dashboard visuel des quotas, vélocité des tokens et répartition de charge en temps réel.
           </p>
         </div>
 
@@ -181,34 +180,26 @@ export default function EvalLapsPage() {
           {/* 1. Google AI Studio Style Executive Quota & Resets Hero */}
           {overviewQuery.data && <QuotaHero overview={overviewQuery.data} />}
 
-          {/* 2. Token Velocity & Burn Rate Time Series Chart */}
-          <TokenBurnChart />
+          {/* 2. Visual Analytics Row: Time-series Burn Rate (Left) + Model Distribution Donut (Right) */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <TokenBurnChart />
+            <ModelDistributionChart models={modelsQuery.data?.models ?? []} />
+          </div>
 
-          {/* 3. KPI Summary Cards */}
-          {summaryQuery.data && <SummaryCards summary={summaryQuery.data} />}
+          {/* 3. Traffic & Quotas Row: Input vs Output Bar (Left) + Load Balancer Visual Gauges (Right) */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <TokenIoChart models={modelsQuery.data?.models ?? []} />
+            {balanceQuery.data && <LoadBalancerVisual distribution={balanceQuery.data} />}
+          </div>
 
-          {/* 4. Load Balancer Quota-Aware HUD & Cost Split */}
-          {balanceQuery.data && modelsQuery.data && (
-            <LoadBalancerHud
-              distribution={balanceQuery.data}
-              breakdown={modelsQuery.data}
-            />
-          )}
-
-          {/* 5. Circuit Breaker Real-time Quota Alerting & Fallback Pipeline */}
-          {cbQuery.data && <CircuitBreakerHud status={cbQuery.data} />}
-
-          {/* 6. Granular Per-Model Consumption & Remaining Quota Gauges */}
-          {modelsQuery.data && <ModelUsageTable models={modelsQuery.data.models} />}
-
-          {/* 7. Agent Stage Breakdown Chart */}
-          <StageChart stages={stagesQuery.data ?? []} />
-
-          {/* 8. Provider Health & Renewal Diagnostics */}
-          <ProviderTable
+          {/* 4. Provider Visual Cards Grid */}
+          <ProviderCards
             providers={providersQuery.data ?? []}
             catalog={renewalsQuery.data ?? []}
           />
+
+          {/* 5. Agent Stage Pipeline Funnel Chart */}
+          <StageChart stages={stagesQuery.data ?? []} />
         </div>
       )}
     </div>

@@ -72,19 +72,16 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-semibold tracking-tight text-text-primary">
-                Taux de Consommation &amp; Quotas en Temps Réel
+                Taux de Consommation &amp; Quotas
               </h2>
               <Badge variant="cyan" className="border-accent-secondary/40 text-accent-secondary text-[10px] font-mono">
-                Tier: Multi-Provider Free Pool
+                Multi-Provider Pool
               </Badge>
               <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-medium text-emerald-400 border border-emerald-500/20">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Cycle Actif
               </span>
             </div>
-            <p className="text-xs text-text-secondary">
-              Mesure continue des quotas quotidiens et mensuels calquée sur les standards de Google AI Studio et OpenAI Platform.
-            </p>
           </div>
         </div>
 
@@ -137,9 +134,6 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
               />
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-text-secondary">
-            Quota total disponible sur la fenêtre de 24 heures.
-          </p>
         </div>
 
         {/* Card 2: Consommation Ce Mois */}
@@ -170,9 +164,6 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
               />
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-text-secondary">
-            Prochain reset mensuel : <span className="font-mono text-text-primary">{overview.monthly_reset_date_utc}</span>
-          </p>
         </div>
 
         {/* Card 3: Tokens Restants */}
@@ -239,8 +230,8 @@ export function QuotaHero({ overview }: QuotaHeroProps) {
               />
             </div>
           </div>
-          <p className="mt-2 text-[11px] text-text-secondary">
-            Reset automatique chaque jour à <span className="font-mono text-text-primary">00:00 UTC</span>.
+          <p className="mt-2 text-[11px] text-text-secondary font-mono">
+            Reset quotidien 00:00 UTC
           </p>
         </div>
       </div>
