@@ -68,15 +68,19 @@ export function TokenIoChart({ models }: TokenIoChartProps) {
   const chartData = models
     .filter((m) => m.total_tokens > 0)
     .slice(0, 6)
-    .map((m) => ({
-      name: m.model_name.length > 14 ? `${m.model_name.slice(0, 12)}…` : m.model_name,
-      model_label: m.model_name,
-      prompt_tokens: m.prompt_tokens,
-      completion_tokens: m.completion_tokens,
-      total_tokens: m.total_tokens,
-      input_cost: m.input_cost_usd,
-      output_cost: m.output_cost_usd,
-    }));
+    .map((m) => {
+      const shortModel = m.model_name.split("/").pop() ?? m.model_name;
+      const label = `${shortModel} (${m.provider_name})`;
+      return {
+        name: label.length > 18 ? `${label.slice(0, 16)}…` : label,
+        model_label: `${m.model_name} [${m.provider_name.toUpperCase()}]`,
+        prompt_tokens: m.prompt_tokens,
+        completion_tokens: m.completion_tokens,
+        total_tokens: m.total_tokens,
+        input_cost: m.input_cost_usd,
+        output_cost: m.output_cost_usd,
+      };
+    });
 
   return (
     <div className="flex h-full flex-col justify-between rounded-xl border border-border-subtle bg-card p-5 shadow-sm">
