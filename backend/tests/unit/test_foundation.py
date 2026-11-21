@@ -113,4 +113,5 @@ async def test_health_endpoint_reports_sanitized_status(
     assert payload["database_status"] == "connected"
     assert payload["llm_provider"] == "openai"
     assert payload["llm_configured"] is False
+    assert "llm_tokens_armed" in payload
     assert "mock_ro_secret" not in response.text

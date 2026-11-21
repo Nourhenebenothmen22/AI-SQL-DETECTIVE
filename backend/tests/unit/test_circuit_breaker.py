@@ -216,3 +216,55 @@ async def test_detective_nodes_dynamically_bypasses_quarantined_provider() -> No
     res2 = await nodes.sql_generator(state, config={})
     assert res2["candidate_sql"] == "SELECT id FROM ecommerce.customers LIMIT 10"
     assert invoked_providers == ["google"]  # OpenAI was NOT called!
+
+
+def test_multi_token_pool_rotation_and_quarantine(
+    test_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Ensure multiple keys under the same provider rotate and quarantine independently."""
+    cb = LLMCircuitBreaker(default_ttl_seconds=300.0)
+    settings = Settings(
+        _env_file=None,
+        app_env="test",
+        database_ro_url=test_settings.database_ro_url,
+        database_app_url=test_settings.database_app_url,
+        groq_api_keys="gsk_token_alpha_1111,gsk_token_beta_2222",
+        sambanova_api_keys="samba_key_3333",
+        llm_fallback_chain="groq,sambanova",
+    )
+
+    assert settings.total_llm_tokens_armed == 3
+    assert len(settings.get_provider_keys("groq")) == 2
+    assert len(settings.get_provider_keys("sambanova")) == 1
+
+    class _DummyKeyModel:
+        def __init__(self, key_id: str) -> None:
+            self.key_id = key_id
+
+        def with_fallbacks(self, fallbacks: list[Any]) -> Any:
+            return {"primary": self.key_id, "fallbacks": [f.key_id for f in fallbacks]}
+
+    # Intercept init_chat_model to record key_id passed via callback
+    monkeypatch.setattr(
+        "app.modules.ai.llm.init_chat_model",
+        lambda model, model_provider, **kw: _DummyKeyModel(
+            kw["callbacks"][0].provider if kw.get("callbacks") else f"{model_provider}:{model}"
+        ),
+    )
+
+    # 1. Initially, groq:1111 is primary, followed by groq:2222 and sambanova:3333
+    chain = build_chat_model(settings, circuit_breaker=cb)
+    assert isinstance(chain, dict)
+    assert chain["primary"] == "groq:1111"
+    assert chain["fallbacks"] == ["groq:2222", "sambanova:3333"]
+
+    # 2. When groq:1111 hits 429 quota exhaustion, only that key is quarantined!
+    cb.record_failure("groq:1111", "HTTP 429 Quota Exceeded")
+    assert cb.is_quarantined("groq:1111") is True
+    assert cb.is_quarantined("groq:2222") is False
+
+    # 3. Next build_chat_model immediately promotes healthy groq:2222 as primary!
+    chain2 = build_chat_model(settings, circuit_breaker=cb)
+    assert isinstance(chain2, dict)
+    assert chain2["primary"] == "groq:2222"
+    assert chain2["fallbacks"] == ["sambanova:3333", "groq:1111"]

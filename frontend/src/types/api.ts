@@ -7,6 +7,7 @@ export interface HealthResponse {
   llm_provider: string;
   llm_configured: boolean;
   llm_providers_armed?: string[];
+  llm_tokens_armed?: number;
   llm_fallback_active?: boolean;
   llm_quarantined_providers?: string[];
 }

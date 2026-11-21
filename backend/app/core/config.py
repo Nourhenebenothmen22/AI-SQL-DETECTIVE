@@ -67,21 +67,51 @@ class Settings(BaseSettings):
     llm_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
     llm_timeout_seconds: int = Field(default=25, ge=5, le=120)
 
-    # Dedicated Provider Credentials
+    # Dedicated Provider Credentials (supports single key or comma-separated multi-token pool)
     openai_api_key: SecretStr | None = None
+    openai_api_keys: SecretStr | None = None
     openai_model: str = "gpt-4o-mini"
 
     google_api_key: SecretStr | None = None
+    google_api_keys: SecretStr | None = None
     google_model: str = "gemini-2.0-flash"
 
     mistral_api_key: SecretStr | None = None
+    mistral_api_keys: SecretStr | None = None
     mistral_model: str = "mistral-small-latest"
 
     openrouter_api_key: SecretStr | None = None
-    openrouter_model: str = "deepseek/deepseek-chat"
+    openrouter_api_keys: SecretStr | None = None
+    openrouter_model: str = "meta-llama/llama-3.3-70b-instruct:free"
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
 
-    llm_fallback_chain: str = "openai,google,mistral,openrouter"
+    # High-Speed & Generous Providers (Groq, SambaNova, Cloudflare, Cohere, z.ai)
+    groq_api_key: SecretStr | None = None
+    groq_api_keys: SecretStr | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+
+    sambanova_api_key: SecretStr | None = None
+    sambanova_api_keys: SecretStr | None = None
+    sambanova_model: str = "Qwen2.5-Coder-32B-Instruct"
+    sambanova_base_url: str = "https://api.sambanova.ai/v1"
+
+    cloudflare_api_key: SecretStr | None = None
+    cloudflare_api_keys: SecretStr | None = None
+    cloudflare_model: str = "@cf/meta/llama-3.3-70b-instruct"
+    cloudflare_base_url: str | None = None
+
+    cohere_api_key: SecretStr | None = None
+    cohere_api_keys: SecretStr | None = None
+    cohere_model: str = "command-r-plus"
+    cohere_base_url: str = "https://api.cohere.com/v1"
+
+    zai_api_key: SecretStr | None = None
+    zai_api_keys: SecretStr | None = None
+    zai_model: str = "default"
+    zai_base_url: str | None = None
+
+    llm_fallback_chain: str = "groq,sambanova,openrouter,google,mistral,openai"
 
     # Optional LangSmith Observability
     langsmith_tracing: bool = False
@@ -93,10 +123,27 @@ class Settings(BaseSettings):
         "llm_api_key",
         "llm_base_url",
         "openai_api_key",
+        "openai_api_keys",
         "google_api_key",
+        "google_api_keys",
         "mistral_api_key",
+        "mistral_api_keys",
         "openrouter_api_key",
+        "openrouter_api_keys",
         "openrouter_base_url",
+        "groq_api_key",
+        "groq_api_keys",
+        "sambanova_api_key",
+        "sambanova_api_keys",
+        "cloudflare_api_key",
+        "cloudflare_api_keys",
+        "cloudflare_base_url",
+        "cohere_api_key",
+        "cohere_api_keys",
+        "cohere_base_url",
+        "zai_api_key",
+        "zai_api_keys",
+        "zai_base_url",
         "langsmith_api_key",
         "database_migrator_url",
         mode="before",
@@ -124,47 +171,67 @@ class Settings(BaseSettings):
     def cors_origin_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
+    def get_provider_keys(self, provider_name: str) -> list[SecretStr]:
+        """Return all configured, unique non-empty SecretStr keys for a provider."""
+        p = provider_name.strip().lower()
+        if p in ("google_genai", "gemini"):
+            p = "google"
+        elif p == "mistralai":
+            p = "mistral"
+
+        raw_keys: list[str] = []
+
+        # 1. Multi-token pool (e.g. GROQ_API_KEYS="k1,k2,k3")
+        multi_field = getattr(self, f"{p}_api_keys", None)
+        if multi_field and multi_field.get_secret_value().strip():
+            for item in multi_field.get_secret_value().split(","):
+                val = item.strip()
+                if val and val not in raw_keys:
+                    raw_keys.append(val)
+
+        # 2. Single-token field (e.g. GROQ_API_KEY="k1")
+        single_field = getattr(self, f"{p}_api_key", None)
+        if single_field and single_field.get_secret_value().strip():
+            val = single_field.get_secret_value().strip()
+            if val and val not in raw_keys:
+                raw_keys.append(val)
+
+        # 3. Generic fallback from settings.llm_api_key
+        if not raw_keys and self.llm_provider.lower() == p and self.llm_api_key:
+            val = self.llm_api_key.get_secret_value().strip()
+            if val and val not in raw_keys:
+                raw_keys.append(val)
+
+        return [SecretStr(k) for k in raw_keys]
+
     @property
     def configured_llm_providers(self) -> list[str]:
-        providers: list[str] = []
-        # OpenAI
-        if (self.openai_api_key and self.openai_api_key.get_secret_value().strip()) or (
-            self.llm_provider == "openai"
-            and self.llm_api_key
-            and self.llm_api_key.get_secret_value().strip()
-            and not self.llm_base_url
-        ):
-            providers.append("openai")
-
-        # Google Gemini
-        if (self.google_api_key and self.google_api_key.get_secret_value().strip()) or (
-            self.llm_provider == "google_genai"
-            and self.llm_api_key
-            and self.llm_api_key.get_secret_value().strip()
-        ):
-            providers.append("google")
-
-        # Mistral AI
-        if (self.mistral_api_key and self.mistral_api_key.get_secret_value().strip()) or (
-            self.llm_provider in ("mistral", "mistralai")
-            and self.llm_api_key
-            and self.llm_api_key.get_secret_value().strip()
-        ):
-            providers.append("mistral")
-
-        # OpenRouter
-        if (self.openrouter_api_key and self.openrouter_api_key.get_secret_value().strip()) or (
-            bool(self.llm_base_url and "openrouter" in self.llm_base_url)
-            and self.llm_api_key
-            and self.llm_api_key.get_secret_value().strip()
-        ):
-            providers.append("openrouter")
+        known = [
+            "groq",
+            "sambanova",
+            "openrouter",
+            "google",
+            "mistral",
+            "cloudflare",
+            "cohere",
+            "zai",
+            "openai",
+        ]
+        configured: list[str] = []
+        for p in known:
+            if self.get_provider_keys(p):
+                configured.append(p)
 
         # Fallback generic provider if not caught above
-        if not providers and self.llm_api_key and self.llm_api_key.get_secret_value().strip():
-            providers.append(self.llm_provider)
+        if not configured and self.llm_api_key and self.llm_api_key.get_secret_value().strip():
+            configured.append(self.llm_provider)
 
-        return providers
+        return configured
+
+    @property
+    def total_llm_tokens_armed(self) -> int:
+        """Total number of unique API keys armed across all configured providers."""
+        return sum(len(self.get_provider_keys(p)) for p in self.configured_llm_providers)
 
     @property
     def is_llm_configured(self) -> bool:
@@ -172,7 +239,7 @@ class Settings(BaseSettings):
 
     @property
     def is_multi_provider_resilient(self) -> bool:
-        return len(self.configured_llm_providers) > 1
+        return self.total_llm_tokens_armed > 1
 
     @property
     def effective_default_max_rows(self) -> int:

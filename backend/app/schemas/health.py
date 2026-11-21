@@ -14,5 +14,6 @@ class HealthResponse(BaseModel):
     llm_provider: str
     llm_configured: bool
     llm_providers_armed: list[str] = []
+    llm_tokens_armed: int = 0
     llm_fallback_active: bool = False
     llm_quarantined_providers: list[str] = []

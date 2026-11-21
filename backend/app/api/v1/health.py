@@ -40,6 +40,7 @@ def health_check(settings: Settings = Depends(get_app_settings)) -> HealthRespon
         llm_provider=settings.llm_provider,
         llm_configured=settings.is_llm_configured,
         llm_providers_armed=settings.configured_llm_providers,
+        llm_tokens_armed=settings.total_llm_tokens_armed,
         llm_fallback_active=settings.is_multi_provider_resilient,
         llm_quarantined_providers=cb.get_quarantined_providers(),
     )

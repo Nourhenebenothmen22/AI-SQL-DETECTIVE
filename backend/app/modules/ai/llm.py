@@ -96,32 +96,49 @@ class LLMCircuitBreaker:
         reason: str,
         ttl_seconds: float | None = None,
     ) -> None:
-        """Quarantine a provider for ttl_seconds (default 5 minutes)."""
+        """Quarantine a provider or key_id for ttl_seconds (default 5 minutes)."""
         p = provider.strip().lower()
+        if p in ("google_genai", "gemini"):
+            p = "google"
+        elif p == "mistralai":
+            p = "mistral"
         ttl = ttl_seconds if ttl_seconds is not None else self._default_ttl
         expiry = time.monotonic() + ttl
         with self._lock:
             self._quarantine[p] = (expiry, reason)
         logger.warning(
-            "Circuit Breaker: quarantined LLM provider '%s' for %ds. Reason: %s",
+            "Circuit Breaker: quarantined LLM provider/key '%s' for %ds. Reason: %s",
             p,
             int(ttl),
             reason,
         )
 
     def is_quarantined(self, provider: str) -> bool:
-        """Check if provider is currently quarantined. Cleans up expired entry if elapsed."""
+        """Check if provider or key_id is currently quarantined. Cleans expired entries."""
         p = provider.strip().lower()
+        if p in ("google_genai", "gemini"):
+            p = "google"
+        elif p == "mistralai":
+            p = "mistral"
+
         with self._lock:
             entry = self._quarantine.get(p)
+            if not entry and ":" in p:
+                prefix = p.split(":", 1)[0]
+                if prefix in ("google_genai", "gemini"):
+                    prefix = "google"
+                elif prefix == "mistralai":
+                    prefix = "mistral"
+                entry = self._quarantine.get(prefix)
+
             if not entry:
                 return False
             expiry, _reason = entry
             if time.monotonic() < expiry:
                 return True
             # Quarantine expired
-            del self._quarantine[p]
-            logger.info("Circuit Breaker: quarantine expired for provider '%s'; re-armed.", p)
+            self._quarantine.pop(p, None)
+            logger.info("Circuit Breaker: quarantine expired for '%s'; re-armed.", p)
             return False
 
     def get_quarantined_providers(self) -> list[str]:
@@ -130,7 +147,7 @@ class LLMCircuitBreaker:
             now = time.monotonic()
             active: list[str] = []
             expired: list[str] = []
-            for p, (expiry, _) in self._quarantine.items():
+            for p, (expiry, _) in list(self._quarantine.items()):
                 if now < expiry:
                     active.append(p)
                 else:
@@ -143,7 +160,15 @@ class LLMCircuitBreaker:
         """Clear quarantine for one or all providers."""
         with self._lock:
             if provider:
-                self._quarantine.pop(provider.strip().lower(), None)
+                p = provider.strip().lower()
+                if p in ("google_genai", "gemini"):
+                    p = "google"
+                elif p == "mistralai":
+                    p = "mistral"
+                self._quarantine.pop(p, None)
+                to_remove = [k for k in self._quarantine if k.startswith(f"{p}:")]
+                for k in to_remove:
+                    self._quarantine.pop(k, None)
             else:
                 self._quarantine.clear()
 
@@ -207,165 +232,238 @@ def _call_init_chat_model(model: str, model_provider: str, **kwargs: Any) -> Bas
         ) from exc
 
 
-def _instantiate_provider_model(
+def _instantiate_single_model(
     provider_name: str,
+    key: Any,
+    key_id: str,
     settings: Settings,
-    circuit_breaker: LLMCircuitBreaker | None = None,
+    circuit_breaker: LLMCircuitBreaker,
 ) -> BaseChatModel | None:
-    cb = circuit_breaker or global_llm_circuit_breaker
     p = provider_name.strip().lower()
-    cb_handler = CircuitBreakerCallbackHandler(p, circuit_breaker=cb)
+    raw_key = key.get_secret_value().strip()
+    if not raw_key:
+        return None
 
-    if p == "openai":
-        key = settings.openai_api_key or (
-            settings.llm_api_key if settings.llm_provider == "openai" else None
-        )
-        if not key or not key.get_secret_value().strip():
-            return None
-        model_name = settings.openai_model if settings.openai_api_key else settings.llm_model
-        kwargs: dict[str, Any] = {
-            "temperature": settings.llm_temperature,
-            "timeout": settings.llm_timeout_seconds,
-            "api_key": key.get_secret_value(),
-            "callbacks": [cb_handler],
-        }
-        if settings.llm_base_url:
-            kwargs["base_url"] = settings.llm_base_url
+    cb_handler = CircuitBreakerCallbackHandler(key_id, circuit_breaker=circuit_breaker)
+    temperature = settings.llm_temperature
+    timeout = settings.llm_timeout_seconds
+
+    # 1. Groq Cloud (Ultra-fast LPU inference, OpenAI-compatible)
+    if p == "groq":
         return _call_init_chat_model(
-            model=model_name,
+            model=settings.groq_model,
             model_provider="openai",
-            **kwargs,
-        )
-
-    if p in ("google", "google_genai", "gemini"):
-        key = settings.google_api_key or (
-            settings.llm_api_key if settings.llm_provider == "google_genai" else None
-        )
-        if not key or not key.get_secret_value().strip():
-            return None
-        model_name = settings.google_model or "gemini-2.0-flash"
-        return _call_init_chat_model(
-            model=model_name,
-            model_provider="google_genai",
-            temperature=settings.llm_temperature,
-            timeout=settings.llm_timeout_seconds,
-            api_key=key.get_secret_value(),
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=settings.groq_base_url,
             callbacks=[cb_handler],
         )
 
-    if p in ("mistral", "mistralai"):
-        key = settings.mistral_api_key or (
-            settings.llm_api_key if settings.llm_provider in ("mistral", "mistralai") else None
-        )
-        if not key or not key.get_secret_value().strip():
-            return None
-        model_name = settings.mistral_model or "mistral-small-latest"
+    # 2. SambaNova Cloud (High-speed SN40L chips, OpenAI-compatible)
+    if p in ("sambanova", "sambanova.ai"):
         return _call_init_chat_model(
-            model=model_name,
-            model_provider="mistralai",
-            temperature=settings.llm_temperature,
-            timeout=settings.llm_timeout_seconds,
-            api_key=key.get_secret_value(),
+            model=settings.sambanova_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=settings.sambanova_base_url,
             callbacks=[cb_handler],
         )
 
+    # 3. OpenRouter (Multi-model aggregator with free & paid tiers)
     if p == "openrouter":
-        key = settings.openrouter_api_key or (
-            settings.llm_api_key
-            if settings.llm_base_url and "openrouter" in settings.llm_base_url
-            else None
-        )
-        if not key or not key.get_secret_value().strip():
-            return None
-        model_name = settings.openrouter_model or "deepseek/deepseek-chat"
-        base_url = settings.openrouter_base_url or "https://openrouter.ai/api/v1"
         return _call_init_chat_model(
-            model=model_name,
+            model=settings.openrouter_model,
             model_provider="openai",
-            temperature=settings.llm_temperature,
-            timeout=settings.llm_timeout_seconds,
-            api_key=key.get_secret_value(),
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=settings.openrouter_base_url,
+            callbacks=[cb_handler],
+        )
+
+    # 4. Cloudflare Workers AI (10,000 neurons/day free, OpenAI-compatible)
+    if p in ("cloudflare", "cloudflare_ai"):
+        base_url = settings.cloudflare_base_url or "https://api.cloudflare.com/client/v4"
+        return _call_init_chat_model(
+            model=settings.cloudflare_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
             base_url=base_url,
             callbacks=[cb_handler],
         )
 
-    # Generic provider fallback from settings.llm_provider
-    if settings.llm_api_key and settings.llm_api_key.get_secret_value().strip():
-        kwargs = {
-            "temperature": settings.llm_temperature,
-            "timeout": settings.llm_timeout_seconds,
-            "api_key": settings.llm_api_key.get_secret_value(),
+    # 5. Cohere (Command R+ via OpenAI-compatible endpoint)
+    if p == "cohere":
+        return _call_init_chat_model(
+            model=settings.cohere_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=settings.cohere_base_url,
+            callbacks=[cb_handler],
+        )
+
+    # 6. z.ai / Custom Provider (OpenAI-compatible)
+    if p in ("zai", "z.ai"):
+        base_url = settings.zai_base_url or "https://api.z.ai/v1"
+        return _call_init_chat_model(
+            model=settings.zai_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=base_url,
+            callbacks=[cb_handler],
+        )
+
+    # 7. Google Gemini (Google AI Studio native)
+    if p in ("google", "google_genai", "gemini"):
+        model_name = settings.google_model or "gemini-2.0-flash"
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="google_genai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            callbacks=[cb_handler],
+        )
+
+    # 8. Mistral AI (Codestral / Mistral native)
+    if p in ("mistral", "mistralai"):
+        model_name = settings.mistral_model or "mistral-small-latest"
+        return _call_init_chat_model(
+            model=model_name,
+            model_provider="mistralai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            callbacks=[cb_handler],
+        )
+
+    # 9. OpenAI Standard
+    if p == "openai":
+        kwargs: dict[str, Any] = {
+            "temperature": temperature,
+            "timeout": timeout,
+            "api_key": raw_key,
             "callbacks": [cb_handler],
         }
         if settings.llm_base_url:
             kwargs["base_url"] = settings.llm_base_url
         return _call_init_chat_model(
-            model=settings.llm_model,
-            model_provider=settings.llm_provider,
+            model=settings.openai_model,
+            model_provider="openai",
             **kwargs,
         )
 
-    return None
+    # 10. Generic fallback from settings.llm_provider
+    kwargs = {
+        "temperature": temperature,
+        "timeout": timeout,
+        "api_key": raw_key,
+        "callbacks": [cb_handler],
+    }
+    if settings.llm_base_url:
+        kwargs["base_url"] = settings.llm_base_url
+    return _call_init_chat_model(
+        model=settings.llm_model,
+        model_provider=settings.llm_provider,
+        **kwargs,
+    )
 
 
 def build_chat_model(
     settings: Settings,
     circuit_breaker: LLMCircuitBreaker | None = None,
 ) -> BaseChatModel:
-    """Create a resilient, provider-agnostic LangChain chat model with automated failover.
+    """Create a resilient, multi-token multi-provider chat model with automated failover.
 
-    If multiple providers are configured in LLM_FALLBACK_CHAIN (e.g. OpenAI, Google,
-    Mistral, OpenRouter), wraps the primary model with LangChain's .with_fallbacks()
-    to guarantee zero downtime on token expiration or quota limits.
-
-    Integrates with the in-memory LLMCircuitBreaker: providers in quarantine (due to recent
-    429/401 errors) are automatically placed at the end of the fallback chain so that
-    healthy models are invoked immediately without waiting for timeouts.
+    Supports multiple keys per provider (e.g. GROQ_API_KEYS="k1,k2", OPENROUTER_API_KEYS="...").
+    If any single token encounters quota limits (HTTP 429) or auth errors (HTTP 401),
+    that specific token is quarantined by key-id in the LLMCircuitBreaker for 5 minutes.
+    Subsequent requests immediately rotate to the next healthy token or provider.
     """
     cb = circuit_breaker or global_llm_circuit_breaker
     chain_order = [p.strip().lower() for p in settings.llm_fallback_chain.split(",") if p.strip()]
 
-    # Prioritize healthy models over quarantined ones
-    healthy_providers = [p for p in chain_order if not cb.is_quarantined(p)]
-    quarantined_providers = [p for p in chain_order if cb.is_quarantined(p)]
-    effective_chain = healthy_providers + quarantined_providers
+    all_models: list[tuple[str, BaseChatModel]] = []
+    seen_keys: set[str] = set()
 
-    models: list[BaseChatModel] = []
-    seen: set[str] = set()
-    for provider in effective_chain:
-        if provider in seen:
-            continue
-        try:
-            m = _instantiate_provider_model(provider, settings, circuit_breaker=cb)
-            if m is not None:
-                models.append(m)
-                seen.add(provider)
-        except LLMProviderPackageError:
-            raise
-        except Exception as exc:
-            logger.warning("Failed to initialize LLM provider '%s': %s", provider, exc)
+    for provider in chain_order:
+        keys = settings.get_provider_keys(provider)
+        for key in keys:
+            raw = key.get_secret_value().strip()
+            if not raw:
+                continue
+            tail = raw[-4:] if len(raw) >= 4 else "key"
+            key_id = f"{provider}:{tail}"
+            if key_id in seen_keys:
+                continue
+            try:
+                m = _instantiate_single_model(
+                    provider_name=provider,
+                    key=key,
+                    key_id=key_id,
+                    settings=settings,
+                    circuit_breaker=cb,
+                )
+                if m is not None:
+                    all_models.append((key_id, m))
+                    seen_keys.add(key_id)
+            except LLMProviderPackageError:
+                raise
+            except Exception as exc:
+                logger.warning("Failed to initialize model for %s: %s", key_id, exc)
 
     # If chain_order did not produce models, try generic fallback
-    if not models:
-        m = _instantiate_provider_model(settings.llm_provider, settings, circuit_breaker=cb)
-        if m is not None:
-            models.append(m)
+    if not all_models:
+        keys = settings.get_provider_keys(settings.llm_provider)
+        if keys:
+            for key in keys:
+                raw = key.get_secret_value().strip()
+                tail = raw[-4:] if len(raw) >= 4 else "key"
+                key_id = f"{settings.llm_provider}:{tail}"
+                try:
+                    m = _instantiate_single_model(
+                        provider_name=settings.llm_provider,
+                        key=key,
+                        key_id=key_id,
+                        settings=settings,
+                        circuit_breaker=cb,
+                    )
+                    if m is not None:
+                        all_models.append((key_id, m))
+                except LLMProviderPackageError:
+                    raise
+                except Exception as exc:
+                    logger.warning("Failed fallback initialization for %s: %s", key_id, exc)
 
-    if not models:
+    if not all_models:
         raise LLMConfigurationError(
-            f"LLM_API_KEY is not configured for provider '{settings.llm_provider}' "
-            f"(model '{settings.llm_model}'). Set LLM_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY, "
-            "or MISTRAL_API_KEY in root .env to enable natural-language SQL workflows."
+            f"LLM_API_KEY is not configured or no valid keys found for: {chain_order}. "
+            "Set LLM_API_KEY, GROQ_API_KEYS, SAMBANOVA_API_KEYS, OPENROUTER_API_KEYS, "
+            "GOOGLE_API_KEY, or OPENAI_API_KEY in root .env to enable SQL workflows."
         )
 
-    quarantined_active = [p for p in seen if cb.is_quarantined(p)]
+    # Prioritize healthy models over quarantined ones
+    healthy_models = [(k_id, m) for k_id, m in all_models if not cb.is_quarantined(k_id)]
+    quarantined_models = [(k_id, m) for k_id, m in all_models if cb.is_quarantined(k_id)]
+    ordered = healthy_models + quarantined_models
+
+    models = [m for _, m in ordered]
     primary = models[0]
     if len(models) > 1:
         logger.info(
-            "Multi-Provider Resilient Failover armed with %d providers: %s (quarantined: %s)",
+            "Multi-Token Multi-Provider Pool armed with %d model(s) across %d provider(s): %s",
             len(models),
-            list(seen),
-            quarantined_active,
+            len(settings.configured_llm_providers),
+            [k_id for k_id, _ in ordered],
         )
         return primary.with_fallbacks(models[1:])
 
