@@ -205,4 +205,3 @@ async def test_reset_quota_cycle_endpoint(async_client: AsyncClient) -> None:
 
     assert data["status"] == "ok"
     assert "reset_at" in data
-
