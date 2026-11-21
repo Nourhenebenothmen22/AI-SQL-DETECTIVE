@@ -322,6 +322,45 @@ def _instantiate_single_model(
             callbacks=[cb_handler],
         )
 
+    # 6b. Kimi / Moonshot AI (OpenAI-compatible)
+    if p in ("kimi", "moonshot"):
+        base_url = settings.kimi_base_url or "https://api.moonshot.cn/v1"
+        return _call_init_chat_model(
+            model=settings.kimi_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=base_url,
+            callbacks=[cb_handler],
+        )
+
+    # 6c. Novita AI (OpenAI-compatible)
+    if p == "novita":
+        base_url = settings.novita_base_url or "https://api.novita.ai/v3/openai"
+        return _call_init_chat_model(
+            model=settings.novita_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=base_url,
+            callbacks=[cb_handler],
+        )
+
+    # 6d. Meta (OpenAI-compatible Llama endpoint)
+    if p == "meta":
+        base_url = settings.meta_base_url or "https://api.groq.com/openai/v1"
+        return _call_init_chat_model(
+            model=settings.meta_model,
+            model_provider="openai",
+            temperature=temperature,
+            timeout=timeout,
+            api_key=raw_key,
+            base_url=base_url,
+            callbacks=[cb_handler],
+        )
+
     # 7. Google Gemini (Google AI Studio native)
     if p in ("google", "google_genai", "gemini"):
         model_name = settings.google_model or "gemini-2.0-flash"

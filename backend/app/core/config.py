@@ -111,7 +111,24 @@ class Settings(BaseSettings):
     zai_model: str = "default"
     zai_base_url: str | None = None
 
-    llm_fallback_chain: str = "groq,sambanova,openrouter,google,mistral,openai"
+    kimi_api_key: SecretStr | None = None
+    kimi_api_keys: SecretStr | None = None
+    kimi_model: str = "moonshot-v1-8k"
+    kimi_base_url: str = "https://api.moonshot.cn/v1"
+
+    novita_api_key: SecretStr | None = None
+    novita_api_keys: SecretStr | None = None
+    novita_model: str = "meta-llama/llama-3.3-70b-instruct"
+    novita_base_url: str = "https://api.novita.ai/v3/openai"
+
+    meta_api_key: SecretStr | None = None
+    meta_api_keys: SecretStr | None = None
+    meta_model: str = "llama-3.3-70b-instruct"
+    meta_base_url: str | None = None
+
+    llm_fallback_chain: str = (
+        "groq,sambanova,openrouter,kimi,novita,google,cohere,cloudflare,zai,mistral,openai"
+    )
 
     # Optional LangSmith Observability
     langsmith_tracing: bool = False
@@ -144,6 +161,15 @@ class Settings(BaseSettings):
         "zai_api_key",
         "zai_api_keys",
         "zai_base_url",
+        "kimi_api_key",
+        "kimi_api_keys",
+        "kimi_base_url",
+        "novita_api_key",
+        "novita_api_keys",
+        "novita_base_url",
+        "meta_api_key",
+        "meta_api_keys",
+        "meta_base_url",
         "langsmith_api_key",
         "database_migrator_url",
         mode="before",
@@ -210,11 +236,14 @@ class Settings(BaseSettings):
             "groq",
             "sambanova",
             "openrouter",
+            "kimi",
+            "novita",
             "google",
             "mistral",
             "cloudflare",
             "cohere",
             "zai",
+            "meta",
             "openai",
         ]
         configured: list[str] = []

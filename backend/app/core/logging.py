@@ -7,15 +7,21 @@ _SENSITIVE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"(://[^:/@\s]+:)([^@\s]+)(@)"), r"\1***\3"),
     # Redact Bearer tokens
     (re.compile(r"(?i)(Bearer\s+)([A-Za-z0-9._\-+/=]+)"), r"\1***"),
-    # Redact common API key prefixes (OpenAI, Anthropic, OpenRouter, Groq, Cerebras, GitHub, Google)
+    # Redact common API key prefixes (OpenAI, OpenRouter, Groq, Kimi, Novita, Cloudflare, etc.)
     (
         re.compile(
             r"\b("
-            r"sk-(?:proj-|ant-|or-v1-)?[A-Za-z0-9_\-]{12,}|"
+            r"sk-(?:proj-|ant-|or-v1-|ms-)?[A-Za-z0-9_\-]{12,}|"
+            r"sk_[A-Za-z0-9_\-]{16,}|"
             r"gsk_[A-Za-z0-9_\-]{20,}|"
             r"csk_[A-Za-z0-9_\-]{20,}|"
+            r"cfut_[A-Za-z0-9_\-]{20,}|"
+            r"LLM_[0-9A-Za-z_\-]{20,}|"
+            r"cohere_[0-9A-Za-z_\-]{20,}|"
             r"ghp_[A-Za-z0-9]{20,}|"
-            r"AIza[0-9A-Za-z_\-]{20,}"
+            r"AIza[0-9A-Za-z_\-]{20,}|"
+            r"AQ\.[0-9A-Za-z_\-]{25,}|"
+            r"[a-f0-9]{32}\.[a-zA-Z0-9_\-]{10,}"
             r")\b"
         ),
         "***",

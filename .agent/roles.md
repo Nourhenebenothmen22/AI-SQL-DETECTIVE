@@ -514,3 +514,24 @@ Before implementing **any** application features, installing dependencies, or pr
 - **Single Source of Truth:** `roles.md` is the absolute authority. Every decision, refactor, and feature MUST strictly comply with it.
 - **100% LLM-Driven Logic:** NEVER use hardcoded keywords, static regex rules, fixed dictionaries, or manual `if/else` decision trees for intent, routing, classification, or content generation. Always delegate reasoning and dynamic logic to the LLM (via structured outputs / prompts).
 - **Mandatory Codebase Audit:** Before implementing any change, audit the relevant files in the codebase to detect and flag any existing hardcoded logic, magic strings, or static fallbacks, and propose replacing them with LLM-driven mechanisms in your Execution Plan.
+
+### 10.1 Mandat Absolu : 100% AI-Driven & Bannissement des Heuristiques « if-else »
+
+1. **Bannissement des Heuristiques Métier :**
+   Il est strictement interdit d'utiliser des embranchements procéduraux (`if/elif/else`), des expressions régulières de filtrage d'intention ou des tables de correspondance statiques pour :
+   - Classifier l'intention ou la complexité d'une question utilisateur.
+   - Sélectionner ou filtrer les tables et colonnes du schéma.
+   - Évaluer la validité sémantique d'une requête SQL ou décider d'une révision.
+   - Diagnostiquer une erreur d'exécution SQL et décider d'une stratégie de correction.
+   - Analyser et optimiser un plan d'exécution `EXPLAIN (FORMAT JSON)`.
+   - Expliquer les données résultantes et recommander une visualisation graphique.
+
+2. **Délégation Intégrale aux Agents LLM Spécialisés :**
+   Toutes les décisions susmentionnées doivent être formulées sous forme de prompts d'experts et résolues par les agents via des sorties typées et structurées (`BaseModel` Pydantic).
+
+3. **Frontière Déterministe Sanctuarisée :**
+   La programmation déterministe (sans LLM) est strictement réservée aux aspects techniques non cognitifs :
+   - Le parsing AST SQLGlot (rempart inviolable contre les injections et la destruction de données).
+   - Les sockets de connexion PostgreSQL et l'application des timeouts de session.
+   - Le chiffrement et masquage des secrets API (`SecretStr`).
+   - Le hachage et la mise en quarantaine réseau du Circuit Breaker.
